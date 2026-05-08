@@ -1167,19 +1167,45 @@ function showApp() {
   document.getElementById('sidebarName').textContent = currentUser.name;
   document.getElementById('sidebarRole').textContent = currentUser.role.toUpperCase();
 
-  // Show CEO-only nav items
+  // ★ ROLE BASED ACCESS
+  // Assign Task — SABKO dikhega (employee khud ko assign kar sake)
+  document.getElementById('nav-assign').style.display = 'flex';
+
   if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
-    document.getElementById('nav-assign').style.display = 'flex';
+    // CEO/Manager ko sab dikhega
     document.getElementById('nav-all-tasks').style.display = 'flex';
     document.getElementById('nav-employees').style.display = 'flex';
     document.getElementById('nav-att-report').style.display = 'flex';
     document.getElementById('nav-leave-approve').style.display = 'flex';
     document.getElementById('ceo-section').style.display = 'block';
     document.getElementById('ceo-notice-form').style.display = 'block';
+  } else {
+    // Employee ko CEO panel nahi dikhega
+    document.getElementById('nav-all-tasks').style.display = 'none';
+    document.getElementById('nav-employees').style.display = 'none';
+    document.getElementById('nav-att-report').style.display = 'none';
+    document.getElementById('nav-leave-approve').style.display = 'none';
+    document.getElementById('ceo-section').style.display = 'none';
+    document.getElementById('ceo-notice-form').style.display = 'none';
   }
 
   // Setup autocomplete for assign task
   loadEmployeeAutocomplete();
+
+  // ★ Employee ke liye: assign task mein apna naam/email auto-fill
+  if (currentUser.role === 'employee') {
+    document.getElementById('at-name').value = currentUser.name;
+    document.getElementById('at-email').value = currentUser.email;
+    document.getElementById('at-name').readOnly = true;
+    document.getElementById('at-email').readOnly = true;
+    document.getElementById('at-name').style.background = '#f8f9fc';
+    document.getElementById('at-email').style.background = '#f8f9fc';
+    // Title change
+    const assignTitle = document.getElementById('assignTaskTitle');
+    const assignSub = document.getElementById('assignTaskSub');
+    if (assignTitle) assignTitle.textContent = 'Add My Task';
+    if (assignSub) assignSub.textContent = 'Create a new task for yourself — will show in CEO dashboard';
+  }
 
   // Load home
   loadHome();
