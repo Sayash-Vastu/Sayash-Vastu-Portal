@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sayash Vastu — Company Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --navy: #0f1c3f;
+  --navy2: #1a2d5a;
+  --gold: #c9a84c;
+  --gold2: #f0c96a;
+  --bg: #f4f5f8;
+  --card: #ffffff;
+  --border: #e4e7ef;
+  --text: #1a1f36;
+  --muted: #6b7280;
+  --green: #0d7a4e;
+  --green-bg: #e8f5f0;
+  --red: #c0392b;
+  --red-bg: #fdf0ee;
+  --blue: #1a4fa0;
+  --blue-bg: #eef2fb;
+  --amber: #b45309;
+  --amber-bg: #fef3e2;
+  --purple: #6d28d9;
+  --purple-bg: #f0ebff;
+  --sidebar-w: 220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#c5cae9;border-radius:3px}
+
+/* ══════════════════════════════════════════
+   LOGIN PAGE
+══════════════════════════════════════════ */
+#loginPage {
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(135deg, #0f1c3f 0%, #1a2d5a 50%, #0f1c3f 100%);
+  position:relative;
+  overflow:hidden;
+}
+#loginPage::before {
+  content:'';
+  position:absolute;
+  width:600px;height:600px;
+  background:radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+  top:-100px;right:-100px;
+  border-radius:50%;
+}
+#loginPage::after {
+  content:'';
+  position:absolute;
+  width:400px;height:400px;
+  background:radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  bottom:-80px;left:-80px;
+  border-radius:50%;
+}
+.login-box {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:20px;
+  padding:48px 44px;
+  width:420px;
+  backdrop-filter:blur(20px);
+  position:relative;
+  z-index:1;
+  box-shadow:0 25px 60px rgba(0,0,0,0.4);
+}
+.login-logo {
+  text-align:center;
+  margin-bottom:32px;
+}
+.login-logo h1 {
+  font-family:'DM Serif Display',serif;
+  font-size:28px;
+  color:#fff;
+  letter-spacing:1px;
+}
+.login-logo h1 span{color:var(--gold)}
+.login-logo p {
+  color:rgba(255,255,255,0.45);
+  font-size:12px;
+  margin-top:5px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.login-divider {
+  width:40px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:0 auto 28px;
+}
+.login-field {
+  margin-bottom:16px;
+}
+.login-field label {
+  display:block;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.5);
+  margin-bottom:8px;
+}
+.login-field input {
+  width:100%;
+  padding:12px 16px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px;
+  color:#fff;
+  font-size:14px;
+  font-family:'DM Sans',sans-serif;
+  outline:none;
+  transition:all 0.2s;
+}
+.login-field input:focus {
+  border-color:var(--gold);
+  background:rgba(255,255,255,0.09);
+  box-shadow:0 0 0 3px rgba(201,168,76,0.1);
+}
+.login-field input::placeholder{color:rgba(255,255,255,0.25)}
+.login-btn {
+  width:100%;
+  padding:13px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border:none;
+  border-radius:10px;
+  color:var(--navy);
+  font-size:14px;
+  font-weight:700;
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;
+  margin-top:8px;
+  transition:all 0.2s;
+  letter-spacing:0.5px;
+}
+.login-btn:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 8px 20px rgba(201,168,76,0.3)}
+.login-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.login-error {
+  background:rgba(192,57,43,0.15);
+  border:1px solid rgba(192,57,43,0.3);
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:12px;
+  color:#ff8a80;
+  margin-top:12px;
+  display:none;
+}
+.login-footer {
+  text-align:center;
+  margin-top:24px;
+  color:rgba(255,255,255,0.25);
+  font-size:11px;
+}
+
+/* ══════════════════════════════════════════
+   MAIN APP LAYOUT
+══════════════════════════════════════════ */
+#appPage{display:none}
+.app-layout {
+  display:flex;
+  min-height:100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:var(--sidebar-w);
+  background:var(--navy);
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;left:0;bottom:0;
+  z-index:200;
+  overflow-y:auto;
+}
+.sidebar-logo {
+  padding:24px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.sidebar-logo h2 {
+  font-family:'DM Serif Display',serif;
+  font-size:18px;
+  color:#fff;
+}
+.sidebar-logo h2 span{color:var(--gold)}
+.sidebar-logo p {
+  font-size:10px;
+  color:rgba(255,255,255,0.35);
+  margin-top:2px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.sidebar-user {
+  padding:14px 16px;
+  margin:12px;
+  background:rgba(255,255,255,0.05);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.user-av {
+  width:36px;height:36px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--navy);
+  flex-shrink:0;
+}
+.user-info-name {
+  font-size:13px;font-weight:600;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.user-info-role {
+  font-size:10px;color:rgba(255,255,255,0.4);
+  text-transform:uppercase;letter-spacing:0.8px;margin-top:1px;
+}
+.sidebar-section {
+  padding:6px 20px 4px;
+  font-size:9px;
+  font-weight:700;
+  color:rgba(255,255,255,0.25);
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-top:8px;
+}
+.nav-btn {
+  display:flex;align-items:center;gap:10px;
+  padding:10px 20px;
+  border:none;background:none;
+  color:rgba(255,255,255,0.55);
+  font-size:13px;font-weight:500;
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;width:100%;text-align:left;
+  border-left:3px solid transparent;
+  transition:all 0.15s;
+}
+.nav-btn:hover{background:rgba(255,255,255,0.06);color:#fff}
+.nav-btn.active{background:rgba(201,168,76,0.1);color:var(--gold);border-left-color:var(--gold)}
+.nav-btn .ni{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--navy);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px}
+.sidebar-logout {
+  margin-top:auto;
+  padding:16px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.logout-btn {
+  width:100%;padding:9px;
+  background:rgba(192,57,43,0.15);
+  border:1px solid rgba(192,57,43,0.2);
+  border-radius:8px;
+  color:#ff8a80;
+  font-size:12px;font-weight:600;
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:all 0.15s;
+}
+.logout-btn:hover{background:rgba(192,57,43,0.25)}
+
+/* ── MAIN CONTENT ── */
+.main-content {
+  margin-left:var(--sidebar-w);
+  flex:1;
+  min-height:100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding:0 28px;
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.topbar-left h3 {
+  font-size:16px;font-weight:700;color:var(--navy);
+}
+.topbar-left p {
+  font-size:11px;color:var(--muted);margin-top:1px;
+}
+.topbar-right {
+  display:flex;align-items:center;gap:12px;
+}
+.date-pill {
+  background:var(--blue-bg);
+  color:var(--blue);
+  font-size:11px;font-weight:600;
+  padding:4px 12px;border-radius:20px;
+}
+.notif-btn {
+  width:34px;height:34px;
+  border-radius:50%;
+  background:var(--bg);
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;
+  position:relative;
+}
+.notif-dot {
+  position:absolute;top:6px;right:6px;
+  width:8px;height:8px;
+  background:var(--gold);
+  border-radius:50%;
+  border:2px solid #fff;
+}
+
+/* ── VIEWS ── */
+.view{display:none;padding:24px 28px}
+.view.active{display:block}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  margin-bottom:22px;
+}
+.page-header h2 {
+  font-size:20px;font-weight:700;color:var(--navy);
+}
+.page-header p {
+  font-size:12px;color:var(--muted);margin-top:3px;
+}
+
+/* ── STAT CARDS ── */
+.stat-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;
+  margin-bottom:24px;
+}
+.stat-card {
+  background:var(--card);
+  border-radius:12px;
+  border:1px solid var(--border);
+  padding:18px 16px;
+  border-top:3px solid #ddd;
+  transition:transform 0.15s,box-shadow 0.15s;
+  cursor:pointer;
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.07)}
+.stat-num{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+.stat-sub{font-size:11px;margin-top:3px}
+.sc-navy{border-top-color:var(--navy)}
+.sc-green{border-top-color:var(--green)}
+.sc-red{border-top-color:var(--red)}
+.sc-gold{border-top-color:var(--gold)}
+.sc-blue{border-top-color:var(--blue)}
+.sc-purple{border-top-color:var(--purple)}
+
+/* ── CARDS / PANELS ── */
+.panel {
+  background:var(--card);
+  border-radius:12px;
+  border:1px solid var(--border);
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.panel-head {
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-title {
+  font-size:14px;font-weight:700;color:var(--navy);
+  display:flex;align-items:center;gap:8px;
+}
+.panel-body{padding:16px 18px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  padding:10px 14px;
+  background:#f8f9fc;
+  color:var(--muted);
+  font-weight:700;font-size:10px;
+  text-transform:uppercase;letter-spacing:0.5px;
+  text-align:left;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody td{
+  padding:11px 14px;
+  border-bottom:1px solid #f5f6fa;
+  color:var(--text);
+  vertical-align:middle;
+}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbff}
+
+/* ── BADGES ── */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;white-space:nowrap;
+}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+.b-gray{background:#f1f3f7;color:var(--muted)}
+.b-navy{background:#e8ecf5;color:var(--navy)}
+.b-gold{background:#fdf6e3;color:#92680a}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:8px 16px;border-radius:8px;
+  font-size:12px;font-weight:600;
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;border:1.5px solid;
+  transition:all 0.15s;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy2)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy);border-color:transparent;font-weight:700}
+.btn-gold:hover{opacity:0.9}
+.btn-outline{background:#fff;color:var(--navy);border-color:var(--navy)}
+.btn-outline:hover{background:#f0f2f8}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{padding:5px 12px;font-size:11px;border-radius:6px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+
+/* ── FORM FIELDS ── */
+.form-grid{display:grid;gap:14px}
+.form-grid.cols-2{grid-template-columns:1fr 1fr}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.field label{
+  display:block;
+  font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.8px;
+  color:var(--muted);margin-bottom:5px;
+}
+.field input,.field select,.field textarea{
+  width:100%;
+  padding:9px 12px;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  font-size:13px;color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  outline:none;background:#fff;
+  transition:border 0.2s,box-shadow 0.2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--navy);
+  box-shadow:0 0 0 3px rgba(15,28,63,0.07);
+}
+.field textarea{resize:vertical;min-height:80px}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);
+  z-index:500;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:#fff;border-radius:16px;
+  padding:28px;width:500px;max-width:95vw;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:0 25px 60px rgba(0,0,0,0.2);
+}
+.modal-title{
+  font-size:17px;font-weight:700;color:var(--navy);
+  margin-bottom:20px;
+  display:flex;align-items:center;gap:8px;
+}
+.modal-actions{
+  display:flex;gap:10px;justify-content:flex-end;
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px solid var(--border);
+}
+
+/* ── NOTICE CARD ── */
+.notice-card{
+  background:var(--card);
+  border-radius:10px;
+  border:1px solid var(--border);
+  border-left:4px solid var(--navy);
+  padding:14px 16px;
+  margin-bottom:12px;
+}
+.notice-card.urgent{border-left-color:var(--red)}
+.notice-card.high{border-left-color:var(--gold)}
+.notice-card.normal{border-left-color:var(--blue)}
+.notice-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.notice-body{font-size:13px;color:var(--muted);line-height:1.6}
+.notice-meta{font-size:11px;color:var(--muted);margin-top:8px;display:flex;gap:12px}
+
+/* ── ATTENDANCE ── */
+.att-check-card{
+  background:linear-gradient(135deg,var(--navy),var(--navy2));
+  border-radius:14px;
+  padding:24px;
+  color:#fff;
+  margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.att-time{font-size:36px;font-weight:800;font-family:'DM Serif Display',serif}
+.att-date{font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px}
+.att-status-text{font-size:13px;color:rgba(255,255,255,0.7);margin-top:8px}
+
+/* ── LOADING / SPINNER ── */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:5px}
+.spin-dark{border-color:rgba(15,28,63,0.2);border-top-color:var(--navy)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--navy);color:#fff;
+  padding:12px 20px;border-radius:10px;
+  font-size:13px;font-weight:500;
+  z-index:900;
+  transform:translateY(80px);opacity:0;
+  transition:all 0.3s;
+  max-width:360px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.15);
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px}
+
+/* ── AVATAR ── */
+.av{
+  width:32px;height:32px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+
+/* ── SECTION DIVIDER ── */
+.section-div{display:flex;align-items:center;gap:12px;margin:20px 0 14px}
+.sd-line{flex:1;height:1px;background:var(--border)}
+.sd-label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+
+/* ── HOME GRID ── */
+.home-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.task-list-item{
+  padding:12px 0;
+  border-bottom:1px solid #f5f6fa;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.task-list-item:last-child{border-bottom:none}
+.task-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.3s}
+
+@media(max-width:900px){
+  .sidebar{width:60px}
+  .sidebar .nav-btn span:not(.ni):not(.nav-badge){display:none}
+  .sidebar-logo p,.sidebar-section,.user-info,.sidebar-user .user-av+div{display:none}
+  .main-content{margin-left:60px}
+  .home-grid{grid-template-columns:1fr}
+  .form-grid.cols-2,.form-grid.cols-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════════ -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>Sayash <span>Vastu</span></h1>
+      <p>Company Portal</p>
+    </div>
+    <div class="login-divider"></div>
+    <div class="login-field">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In to Portal</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-footer">© 2026 Sayash Vastu. All rights reserved.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="appPage">
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sayash <span>Vastu</span></h2>
+        <p>Company Portal</p>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-av" id="sidebarAv">SV</div>
+        <div>
+          <div class="user-info-name" id="sidebarName">Loading...</div>
+          <div class="user-info-role" id="sidebarRole">—</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">Overview</div>
+      <button class="nav-btn active" onclick="showView('home')"><span class="ni">🏠</span> <span>Dashboard</span></button>
+
+      <div class="sidebar-section">Work</div>
+      <button class="nav-btn" onclick="showView('tasks')" id="nav-tasks"><span class="ni">📋</span> <span>My Tasks</span> <span class="nav-badge" id="nb-tasks">0</span></button>
+      <button class="nav-btn" id="nav-assign" onclick="showView('assign')" style="display:none"><span class="ni">➕</span> <span>Assign Task</span></button>
+
+      <div class="sidebar-section">HR</div>
+      <button class="nav-btn" onclick="showView('attendance')"><span class="ni">⏰</span> <span>Attendance</span></button>
+      <button class="nav-btn" onclick="showView('leaves')" id="nav-leaves"><span class="ni">🏖️</span> <span>Leave</span> <span class="nav-badge" id="nb-leaves" style="display:none">0</span></button>
+      <button class="nav-btn" onclick="showView('notices')"><span class="ni">📢</span> <span>Notice Board</span></button>
+
+      <div class="sidebar-section" id="ceo-section" style="display:none">CEO Panel</div>
+      <button class="nav-btn" id="nav-all-tasks" onclick="showView('allTasks')" style="display:none"><span class="ni">📊</span> <span>All Tasks</span></button>
+      <button class="nav-btn" id="nav-employees" onclick="showView('employees')" style="display:none"><span class="ni">👥</span> <span>Employees</span></button>
+      <button class="nav-btn" id="nav-att-report" onclick="showView('attReport')" style="display:none"><span class="ni">📅</span> <span>Att. Report</span></button>
+      <button class="nav-btn" id="nav-leave-approve" onclick="showView('leaveApprove')" style="display:none"><span class="ni">✅</span> <span>Leave Approvals</span> <span class="nav-badge" id="nb-leave-approve" style="display:none">0</span></button>
+
+      <div class="sidebar-logout">
+        <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content">
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <h3 id="topbarTitle">Dashboard</h3>
+          <p id="topbarSub">Welcome back!</p>
+        </div>
+        <div class="topbar-right">
+          <div class="date-pill" id="topbarDate">—</div>
+          <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+        </div>
+      </div>
+
+      <!-- ── HOME VIEW ── -->
+      <div class="view active" id="view-home">
+        <div class="page-header">
+          <h2 id="homeGreeting">Good Morning! 👋</h2>
+          <p id="homeSubtitle">Here's your overview for today</p>
+        </div>
+        <div class="stat-grid" id="homeStats"></div>
+        <div class="home-grid">
+          <div>
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">📋 My Active Tasks</div>
+                <button class="btn btn-outline btn-sm" onclick="showView('tasks')">View All</button>
+              </div>
+              <div id="homeTaskList"><div class="empty-state"><div class="empty-icon">📭</div><p>No active tasks</p></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">📢 Latest Notices</div></div>
+              <div id="homeNotices" style="padding:12px 16px"></div>
+            </div>
+            <div class="panel" style="margin-top:16px">
+              <div class="panel-head"><div class="panel-title">⏰ Today's Attendance</div></div>
+              <div id="homeAttendance" style="padding:16px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MY TASKS VIEW ── -->
+      <div class="view" id="view-tasks">
+        <div class="page-header">
+          <h2>My Tasks</h2>
+          <p>Track and update your assigned tasks</p>
+        </div>
+        <div class="stat-grid" id="taskStats"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📋 Task List</div>
+            <select class="btn btn-outline btn-sm" onchange="filterMyTasks(this.value)" style="cursor:pointer">
+              <option value="all">All Status</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Sent for Review">Sent for Review</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Project</th><th>Task</th><th>Start</th><th>End</th><th>TAT</th><th>Status</th><th>CEO Approval</th><th>Action</th></tr></thead>
+              <tbody id="myTasksBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ASSIGN TASK VIEW (CEO/Manager) ── -->
+      <div class="view" id="view-assign">
+        <div class="page-header">
+          <h2>Assign Task</h2>
+          <p>Assign a new task to an employee</p>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">➕ New Task</div></div>
+          <div class="panel-body">
+            <div class="form-grid cols-2">
+              <div class="field">
+                <label>Employee Name</label>
+                <input type="text" id="at-name" list="empNameList" placeholder="Select or type name..."/>
+                <datalist id="empNameList"></datalist>
+              </div>
+              <div class="field">
+                <label>Employee Email</label>
+                <input type="email" id="at-email" list="empEmailList" placeholder="employee@sayashvastu.com"/>
+                <datalist id="empEmailList"></datalist>
+              </div>
+              <div class="field">
+                <label>Project Name</label>
+                <input type="text" id="at-project" placeholder="e.g. CKPC Project"/>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>Task Detail</label>
+                <textarea id="at-detail" placeholder="Describe the task in detail..."></textarea>
+              </div>
+              <div class="field">
+                <label>Start Date</label>
+                <input type="date" id="at-start"/>
+              </div>
+              <div class="field">
+                <label>End Date</label>
+                <input type="date" id="at-end"/>
+              </div>
+              <div class="field">
+                <label>TAT Date</label>
+                <input type="date" id="at-tat"/>
+              </div>
+            </div>
+            <div style="margin-top:16px">
+              <button class="btn btn-gold" id="assignBtn" onclick="assignTask()">➕ Assign Task</button>
+              <span id="assignMsg" style="margin-left:12px;font-size:12px;font-weight:600"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ATTENDANCE VIEW ── -->
+      <div class="view" id="view-attendance">
+        <div class="page-header">
+          <h2>Attendance</h2>
+          <p>Mark your daily attendance</p>
+        </div>
+        <div class="att-check-card">
+          <div>
+            <div class="att-time" id="attClock">--:--</div>
+            <div class="att-date" id="attDate">Loading...</div>
+            <div class="att-status-text" id="attStatusText">Checking attendance...</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+            <button class="btn btn-gold" id="checkInBtn" onclick="markCheckIn()" style="display:none">✅ Check In</button>
+            <button class="btn" id="checkOutBtn" onclick="markCheckOut()" style="display:none;background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:#fff">🚪 Check Out</button>
+            <div id="attCheckedMsg" style="color:rgba(255,255,255,0.7);font-size:13px;display:none"></div>
+          </div>
+        </div>
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card sc-green"><div class="stat-num" id="att-present">0</div><div class="stat-lbl">Present Days</div></div>
+          <div class="stat-card sc-red"><div class="stat-num" id="att-absent">0</div><div class="stat-lbl">Absent Days</div></div>
+          <div class="stat-card sc-gold"><div class="stat-num" id="att-half">0</div><div class="stat-lbl">Half Days</div></div>
+          <div class="stat-card sc-blue"><div class="stat-num" id="att-leave">0</div><div class="stat-lbl">On Leave</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">📅 This Month's Attendance</div></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
+              <tbody id="attBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LEAVE VIEW ── -->
+      <div class="view" id="view-leaves">
+        <div class="page-header">
+          <h2>Leave Management</h2>
+          <p>Apply for leave and track your leave balance</p>
+        </div>
+        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card sc-green"><div class="stat-num" id="lv-balance">12</div><div class="stat-lbl">Leave Balance</div></div>
+          <div class="stat-card sc-amber"><div class="stat-num" id="lv-pending">0</div><div class="stat-lbl">Pending</div></div>
+          <div class="stat-card sc-blue"><div class="stat-num" id="lv-taken">0</div><div class="stat-lbl">Taken This Year</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🏖️ Apply for Leave</div>
+          </div>
+          <div class="panel-body">
+            <div class="form-grid cols-2">
+              <div class="field">
+                <label>Leave Type</label>
+                <select id="lv-type">
+                  <option>Casual</option>
+                  <option>Sick</option>
+                  <option>Earned</option>
+                  <option>Unpaid</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>From Date</label>
+                <input type="date" id="lv-from"/>
+              </div>
+              <div class="field">
+                <label>To Date</label>
+                <input type="date" id="lv-to"/>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>Reason</label>
+                <textarea id="lv-reason" placeholder="Reason for leave..."></textarea>
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <button class="btn btn-gold" onclick="applyLeave()">Apply Leave</button>
+              <span id="leaveMsg" style="margin-left:12px;font-size:12px;font-weight:600"></span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">📋 My Leave History</div></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th></tr></thead>
+              <tbody id="leaveBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NOTICES VIEW ── -->
+      <div class="view" id="view-notices">
+        <div class="page-header">
+          <h2>Notice Board</h2>
+          <p>Company announcements and updates</p>
+        </div>
+        <div id="ceo-notice-form" style="display:none">
+          <div class="panel" style="margin-bottom:20px">
+            <div class="panel-head"><div class="panel-title">📢 Post New Notice</div></div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Title</label>
+                  <input type="text" id="nt-title" placeholder="Notice title..."/>
+                </div>
+                <div class="field">
+                  <label>Content</label>
+                  <textarea id="nt-content" placeholder="Notice content..."></textarea>
+                </div>
+                <div class="form-grid cols-2">
+                  <div class="field">
+                    <label>Priority</label>
+                    <select id="nt-priority">
+                      <option>Normal</option>
+                      <option>High</option>
+                      <option>Urgent</option>
+                      <option>Low</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Target</label>
+                    <select id="nt-target">
+                      <option>All</option>
+                      <option>Employee</option>
+                      <option>Manager</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-gold" style="margin-top:12px" onclick="postNotice()">📢 Post Notice</button>
+              <span id="noticeMsg" style="margin-left:12px;font-size:12px;font-weight:600"></span>
+            </div>
+          </div>
+        </div>
+        <div id="noticesList"></div>
+      </div>
+
+      <!-- ── ALL TASKS (CEO) ── -->
+      <div class="view" id="view-allTasks">
+        <div class="page-header">
+          <h2>All Tasks</h2>
+          <p>Complete task overview for all employees</p>
+        </div>
+        <div class="stat-grid" id="allTaskStats"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📋 All Tasks</div>
+            <select class="btn btn-outline btn-sm" onchange="filterAllTasks(this.value)" style="cursor:pointer">
+              <option value="all">All Status</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Project</th><th>Task</th><th>Assigned To</th><th>TAT Date</th><th>Status</th><th>CEO Approval</th></tr></thead>
+              <tbody id="allTasksBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EMPLOYEES (CEO) ── -->
+      <div class="view" id="view-employees">
+        <div class="page-header">
+          <h2>Employees</h2>
+          <p>Manage company employees</p>
+        </div>
+        <div style="margin-bottom:16px;display:flex;justify-content:flex-end">
+          <button class="btn btn-gold" onclick="openAddEmpModal()">➕ Add Employee</button>
+        </div>
+        <div class="panel">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Department</th><th>Designation</th><th>Role</th><th>Status</th></tr></thead>
+              <tbody id="employeesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ATTENDANCE REPORT (CEO) ── -->
+      <div class="view" id="view-attReport">
+        <div class="page-header">
+          <h2>Attendance Report</h2>
+          <p>Monthly attendance overview for all employees</p>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📅 Monthly Report</div>
+            <input type="month" id="att-month-filter" onchange="loadAttReport()" style="padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none"/>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Half Day</th><th>Leave</th><th>Total Days</th><th>Attendance %</th></tr></thead>
+              <tbody id="attReportBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LEAVE APPROVALS (CEO) ── -->
+      <div class="view" id="view-leaveApprove">
+        <div class="page-header">
+          <h2>Leave Approvals</h2>
+          <p>Approve or reject employee leave requests</p>
+        </div>
+        <div id="leaveApproveList"></div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /app-layout -->
+</div><!-- /appPage -->
+
+<!-- ── TASK UPDATE MODAL ── -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-title">📋 Update Task</div>
+    <div id="taskModalContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('taskModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveTaskUpdate()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD EMPLOYEE MODAL ── -->
+<div class="modal-overlay" id="addEmpModal">
+  <div class="modal">
+    <div class="modal-title">👤 Add New Employee</div>
+    <div class="form-grid">
+      <div class="form-grid cols-2">
+        <div class="field"><label>Full Name</label><input type="text" id="ae-name" placeholder="Employee Name"/></div>
+        <div class="field"><label>Email</label><input type="email" id="ae-email" placeholder="email@sayashvastu.com"/></div>
+        <div class="field"><label>Phone</label><input type="text" id="ae-phone" placeholder="9876543210"/></div>
+        <div class="field"><label>Employee Code</label><input type="text" id="ae-code" placeholder="EMP005"/></div>
+        <div class="field"><label>Department</label><input type="text" id="ae-dept" placeholder="Design"/></div>
+        <div class="field"><label>Designation</label><input type="text" id="ae-desig" placeholder="Designer"/></div>
+        <div class="field"><label>Role</label>
+          <select id="ae-role">
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="ceo">CEO</option>
+          </select>
+        </div>
+        <div class="field"><label>Password</label><input type="text" id="ae-pass" placeholder="Emp@1234"/></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addEmpModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="addEmployee()">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  SUPABASE CONFIG
+// ══════════════════════════════════════════
+const SUPABASE_URL = 'https://rgoujuvdqqddqeqnryfg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Qi90wjrEak0zpymXEecNbQ_C30agpsx';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let currentUser = null;
+let myTasks = [];
+let allTasksData = [];
+let allTasksFilter = 'all';
+let myTasksFilter = 'all';
+let currentTaskRow = null;
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+window.onload = function() {
+  updateClock();
+  setInterval(updateClock, 1000);
+  updateDateHeader();
+
+  // Check if already logged in
+  const saved = sessionStorage.getItem('sv_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showApp();
+  }
+
+  // Enter key login
+  document.getElementById('loginPass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+};
+
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const el = document.getElementById('attClock');
+  if (el) el.textContent = t;
+}
+
+function updateDateHeader() {
+  const now = new Date();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dateStr = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  const el = document.getElementById('topbarDate');
+  if (el) el.textContent = dateStr;
+  const attDate = document.getElementById('attDate');
+  if (attDate) attDate.textContent = dateStr;
+}
+
+// ══════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+
+  if (!email || !pass) {
+    showLoginError('Please enter email and password.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Signing in...';
+  errEl.style.display = 'none';
+
+  try {
+    const { data, error } = await sb
+      .from('employees')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .eq('password_hash', pass)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      showLoginError('Invalid email or password. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Sign In to Portal';
+      return;
+    }
+
+    currentUser = data;
+    sessionStorage.setItem('sv_user', JSON.stringify(data));
+
+    // Log session
+    await sb.from('user_sessions').insert({
+      employee_email: data.email,
+      employee_name: data.name,
+      role: data.role,
+      login_at: new Date().toISOString()
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Sign In to Portal';
+    showApp();
+
+  } catch (err) {
+    showLoginError('Connection error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Sign In to Portal';
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function doLogout() {
+  sessionStorage.removeItem('sv_user');
+  currentUser = null;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// ══════════════════════════════════════════
+//  SHOW APP
+// ══════════════════════════════════════════
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+
+  // Set sidebar user info
+  const av = currentUser.name.substring(0, 2).toUpperCase();
+  document.getElementById('sidebarAv').textContent = av;
+  document.getElementById('sidebarName').textContent = currentUser.name;
+  document.getElementById('sidebarRole').textContent = currentUser.role.toUpperCase();
+
+  // Show CEO-only nav items
+  if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
+    document.getElementById('nav-assign').style.display = 'flex';
+    document.getElementById('nav-all-tasks').style.display = 'flex';
+    document.getElementById('nav-employees').style.display = 'flex';
+    document.getElementById('nav-att-report').style.display = 'flex';
+    document.getElementById('nav-leave-approve').style.display = 'flex';
+    document.getElementById('ceo-section').style.display = 'block';
+    document.getElementById('ceo-notice-form').style.display = 'block';
+  }
+
+  // Setup autocomplete for assign task
+  loadEmployeeAutocomplete();
+
+  // Load home
+  loadHome();
+  showView('home');
+
+  // Set greeting
+  const h = new Date().getHours();
+  let greet = h < 12 ? '☀️ Good Morning' : h < 17 ? '🌤️ Good Afternoon' : '🌆 Good Evening';
+  document.getElementById('homeGreeting').textContent = greet + ', ' + currentUser.name + '!';
+  document.getElementById('homeSubtitle').textContent = 'Here\'s your overview for today';
+
+  // Set assign task default date
+  const today = new Date().toISOString().split('T')[0];
+  const atStart = document.getElementById('at-start');
+  if (atStart) atStart.value = today;
+}
+
+// ══════════════════════════════════════════
+//  VIEW NAVIGATION
+// ══════════════════════════════════════════
+const viewTitles = {
+  home: ['Dashboard', 'Welcome back!'],
+  tasks: ['My Tasks', 'Track and update your tasks'],
+  assign: ['Assign Task', 'Create and assign tasks to employees'],
+  attendance: ['Attendance', 'Mark your daily attendance'],
+  leaves: ['Leave Management', 'Apply and track leaves'],
+  notices: ['Notice Board', 'Company announcements'],
+  allTasks: ['All Tasks', 'Complete task overview'],
+  employees: ['Employees', 'Manage company employees'],
+  attReport: ['Attendance Report', 'Monthly attendance overview'],
+  leaveApprove: ['Leave Approvals', 'Approve or reject leave requests'],
+};
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const el = document.getElementById('view-' + name);
+  if (el) el.classList.add('active');
+
+  const navBtn = document.querySelector(`[onclick="showView('${name}')"]`);
+  if (navBtn) navBtn.classList.add('active');
+
+  const titles = viewTitles[name] || [name, ''];
+  document.getElementById('topbarTitle').textContent = titles[0];
+  document.getElementById('topbarSub').textContent = titles[1];
+
+  // Load data for each view
+  if (name === 'home') loadHome();
+  if (name === 'tasks') loadMyTasks();
+  if (name === 'attendance') loadAttendance();
+  if (name === 'leaves') loadLeaves();
+  if (name === 'notices') loadNotices();
+  if (name === 'allTasks') loadAllTasks();
+  if (name === 'employees') loadEmployees();
+  if (name === 'attReport') {
+    const now = new Date();
+    document.getElementById('att-month-filter').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    loadAttReport();
+  }
+  if (name === 'leaveApprove') loadLeaveApprovals();
+}
+
+// ══════════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════════
+async function loadHome() {
+  // Load tasks
+  const { data: tasks } = await sb.from('tasks')
+    .select('*')
+    .eq('assigned_to_email', currentUser.email)
+    .neq('work_status', 'Completed')
+    .order('tat_date', { ascending: true })
+    .limit(5);
+
+  myTasks = tasks || [];
+  document.getElementById('nb-tasks').textContent = myTasks.length;
+
+  // Stats
+  const { data: allMyTasks } = await sb.from('tasks').select('work_status').eq('assigned_to_email', currentUser.email);
+  const ns = (allMyTasks || []).filter(t => t.work_status === 'Not Started').length;
+  const ip = (allMyTasks || []).filter(t => t.work_status === 'In Progress').length;
+  const done = (allMyTasks || []).filter(t => t.work_status === 'Completed').length;
+
+  // CEO stats
+  let statsHTML = '';
+  if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
+    const { count: totalEmp } = await sb.from('employees').select('*', { count: 'exact' }).eq('is_active', true);
+    const { count: totalTasks } = await sb.from('tasks').select('*', { count: 'exact' });
+    const { count: pendingLeaves } = await sb.from('leaves').select('*', { count: 'exact' }).eq('status', 'Pending');
+    document.getElementById('nb-leave-approve').textContent = pendingLeaves || 0;
+    if (pendingLeaves > 0) document.getElementById('nb-leave-approve').style.display = 'inline-block';
+
+    statsHTML = `
+      <div class="stat-card sc-navy clickable" onclick="showView('employees')"><div class="stat-num">${totalEmp || 0}</div><div class="stat-lbl">Total Employees</div></div>
+      <div class="stat-card sc-blue clickable" onclick="showView('allTasks')"><div class="stat-num">${totalTasks || 0}</div><div class="stat-lbl">Total Tasks</div></div>
+      <div class="stat-card sc-amber clickable" onclick="showView('leaveApprove')"><div class="stat-num">${pendingLeaves || 0}</div><div class="stat-lbl">Pending Leaves</div></div>
+      <div class="stat-card sc-green clickable" onclick="showView('tasks')"><div class="stat-num">${done}</div><div class="stat-lbl">My Completed</div></div>
+    `;
+  } else {
+    statsHTML = `
+      <div class="stat-card sc-navy"><div class="stat-num">${ns}</div><div class="stat-lbl">Not Started</div></div>
+      <div class="stat-card sc-blue"><div class="stat-num">${ip}</div><div class="stat-lbl">In Progress</div></div>
+      <div class="stat-card sc-green"><div class="stat-num">${done}</div><div class="stat-lbl">Completed</div></div>
+      <div class="stat-card sc-gold"><div class="stat-num">${(allMyTasks || []).length}</div><div class="stat-lbl">Total Tasks</div></div>
+    `;
+  }
+  document.getElementById('homeStats').innerHTML = statsHTML;
+
+  // Task list
+  const taskListEl = document.getElementById('homeTaskList');
+  if (!myTasks.length) {
+    taskListEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">All caught up!</div><p>No pending tasks</p></div>';
+  } else {
+    taskListEl.innerHTML = '<div style="padding:8px 16px">' + myTasks.map(t => {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      const isLate = tat && today > tat;
+      return `<div class="task-list-item">
+        <div class="task-dot" style="background:${t.work_status === 'In Progress' ? '#1a4fa0' : isLate ? '#c0392b' : '#6b7280'}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--navy)">${esc(t.project)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(t.task_detail.substring(0, 60))}${t.task_detail.length > 60 ? '...' : ''}</div>
+          <div style="margin-top:5px;display:flex;gap:6px;align-items:center">
+            ${statusBadge(t.work_status)}
+            ${tat ? `<span style="font-size:10px;color:${isLate ? 'var(--red)' : 'var(--muted)'};font-weight:600">TAT: ${fmtDate(t.tat_date)}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  // Notices
+  const { data: notices } = await sb.from('notices').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(3);
+  const noticesEl = document.getElementById('homeNotices');
+  if (!notices || !notices.length) {
+    noticesEl.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No notices</p>';
+  } else {
+    noticesEl.innerHTML = notices.map(n => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">${esc(n.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(n.content.substring(0, 80))}...</div>
+      </div>
+    `).join('');
+  }
+
+  // Today's attendance
+  loadTodayAttendanceWidget();
+}
+
+async function loadTodayAttendanceWidget() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).eq('date', today).single();
+  const el = document.getElementById('homeAttendance');
+  if (data) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">${data.status === 'Present' ? '✅' : '⚠️'}</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">${data.status}</div>
+          <div style="font-size:11px;color:var(--muted)">Check-in: ${data.check_in ? new Date(data.check_in).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}</div>
+          ${data.check_out ? `<div style="font-size:11px;color:var(--muted)">Check-out: ${new Date(data.check_out).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}
+        </div>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `<div style="text-align:center"><p style="color:var(--muted);font-size:13px;margin-bottom:10px">Not checked in yet</p><button class="btn btn-green btn-sm" onclick="showView('attendance')">Mark Attendance</button></div>`;
+  }
+}
+
+// ══════════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════════
+async function loadMyTasks() {
+  const { data } = await sb.from('tasks').select('*').eq('assigned_to_email', currentUser.email).order('created_at', { ascending: false });
+  myTasks = data || [];
+  renderMyTasks();
+  // Stats
+  const ns = myTasks.filter(t => t.work_status === 'Not Started').length;
+  const ip = myTasks.filter(t => t.work_status === 'In Progress').length;
+  const rv = myTasks.filter(t => t.work_status === 'Sent for Review').length;
+  const done = myTasks.filter(t => t.work_status === 'Completed').length;
+  document.getElementById('taskStats').innerHTML = `
+    <div class="stat-card sc-navy"><div class="stat-num">${myTasks.length}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card sc-blue"><div class="stat-num">${ip}</div><div class="stat-lbl">In Progress</div></div>
+    <div class="stat-card sc-amber"><div class="stat-num">${rv}</div><div class="stat-lbl">In Review</div></div>
+    <div class="stat-card sc-green"><div class="stat-num">${done}</div><div class="stat-lbl">Completed</div></div>
+  `;
+  document.getElementById('nb-tasks').textContent = myTasks.filter(t => t.work_status !== 'Completed').length;
+}
+
+function filterMyTasks(val) { myTasksFilter = val; renderMyTasks(); }
+
+function renderMyTasks() {
+  const filtered = myTasksFilter === 'all' ? myTasks : myTasks.filter(t => t.work_status === myTasksFilter);
+  const tbody = document.getElementById('myTasksBody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px">No tasks found</td></tr>';
+    return;
+  }
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  tbody.innerHTML = filtered.map(t => {
+    const tat = t.tat_date ? new Date(t.tat_date) : null;
+    const isLate = tat && today > tat && t.work_status !== 'Completed';
+    return `<tr style="${isLate ? 'background:#fdf0ee' : ''}">
+      <td><span style="background:#e8ecf5;color:var(--navy);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${esc(t.project)}</span></td>
+      <td style="font-weight:600;max-width:180px">${esc(t.task_detail.substring(0, 50))}${t.task_detail.length > 50 ? '...' : ''}</td>
+      <td style="font-size:11px">${fmtDate(t.start_date)}</td>
+      <td style="font-size:11px">${fmtDate(t.end_date)}</td>
+      <td style="font-size:11px;font-weight:700;color:${isLate ? 'var(--red)' : 'var(--muted)'}">${fmtDate(t.tat_date)}</td>
+      <td>${statusBadge(t.work_status)}</td>
+      <td>${ceoBadge(t.ceo_approval)}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="openTaskModal('${t.id}')">Update</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openTaskModal(taskId) {
+  const t = myTasks.find(x => x.id === taskId);
+  if (!t) return;
+  currentTaskRow = t;
+  const locked = t.work_status === 'Completed';
+  document.getElementById('taskModalContent').innerHTML = `
+    <div style="margin-bottom:16px;padding:12px;background:#f8f9fc;border-radius:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--navy)">${esc(t.project)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">${esc(t.task_detail)}</div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        ${statusBadge(t.work_status)}
+        <span style="font-size:11px;color:var(--muted)">TAT: ${fmtDate(t.tat_date)}</span>
+      </div>
+    </div>
+    ${locked ? '<div class="badge b-green" style="margin-bottom:12px">✅ Task Completed — locked</div>' : `
+    <div class="field" style="margin-bottom:12px">
+      <label>Update Status</label>
+      <select id="modal-status">
+        ${['Not Started','In Progress','Sent for Review','Completed'].map(s => `<option ${s === t.work_status ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" id="ceo-approval-field" style="margin-bottom:12px;display:${t.work_status === 'Completed' ? 'block' : 'none'}">
+      <label>CEO Approval</label>
+      <select id="modal-ceo">
+        <option value="">— Select —</option>
+        <option ${t.ceo_approval === 'Finalize with SG' ? 'selected' : ''}>Finalize with SG</option>
+        <option ${t.ceo_approval === 'Finalize with YG' ? 'selected' : ''}>Finalize with YG</option>
+      </select>
+    </div>
+    `}
+    <div class="field">
+      <label>Comments</label>
+      <textarea id="modal-comments" ${locked ? 'disabled' : ''}>${esc(t.comments || '')}</textarea>
+    </div>
+    <div id="modalMsg" style="font-size:12px;font-weight:600;margin-top:8px"></div>
+  `;
+  // Show CEO approval when status = Completed
+  const selEl = document.getElementById('modal-status');
+  if (selEl) {
+    selEl.addEventListener('change', function() {
+      const cf = document.getElementById('ceo-approval-field');
+      if (cf) cf.style.display = this.value === 'Completed' ? 'block' : 'none';
+    });
+  }
+  document.getElementById('taskModal').classList.add('open');
+}
+
+async function saveTaskUpdate() {
+  if (!currentTaskRow) return;
+  const locked = currentTaskRow.work_status === 'Completed';
+  if (locked) { closeModal('taskModal'); return; }
+  const status = document.getElementById('modal-status').value;
+  const comments = document.getElementById('modal-comments').value.trim();
+  const ceoVal = (document.getElementById('modal-ceo') || {}).value || currentTaskRow.ceo_approval;
+  const msgEl = document.getElementById('modalMsg');
+
+  const updates = { work_status: status, comments, updated_at: new Date().toISOString() };
+  if (status === 'Completed' && ceoVal) updates.ceo_approval = ceoVal;
+
+  const { error } = await sb.from('tasks').update(updates).eq('id', currentTaskRow.id);
+  if (error) { msgEl.textContent = '❌ Error: ' + error.message; msgEl.style.color = 'var(--red)'; return; }
+
+  showToast('✅ Task updated successfully!', 'ok');
+  closeModal('taskModal');
+  loadMyTasks();
+}
+
+// ══════════════════════════════════════════
+//  ASSIGN TASK
+// ══════════════════════════════════════════
+async function loadEmployeeAutocomplete() {
+  const { data } = await sb.from('employees').select('name,email').eq('is_active', true);
+  if (!data) return;
+  const nameList = document.getElementById('empNameList');
+  const emailList = document.getElementById('empEmailList');
+  if (nameList) nameList.innerHTML = data.map(e => `<option value="${esc(e.name)}">`).join('');
+  if (emailList) emailList.innerHTML = data.map(e => `<option value="${esc(e.email)}">`).join('');
+
+  // Auto-fill email when name selected
+  const nameEl = document.getElementById('at-name');
+  if (nameEl) {
+    nameEl.addEventListener('change', function() {
+      const emp = data.find(e => e.name === this.value);
+      if (emp) document.getElementById('at-email').value = emp.email;
+    });
+  }
+}
+
+async function assignTask() {
+  const name = document.getElementById('at-name').value.trim();
+  const email = document.getElementById('at-email').value.trim();
+  const project = document.getElementById('at-project').value.trim();
+  const detail = document.getElementById('at-detail').value.trim();
+  const start = document.getElementById('at-start').value;
+  const end = document.getElementById('at-end').value;
+  const tat = document.getElementById('at-tat').value;
+  const btn = document.getElementById('assignBtn');
+  const msg = document.getElementById('assignMsg');
+
+  if (!name || !email || !project || !detail || !start || !end || !tat) {
+    msg.textContent = '⚠️ Please fill all fields'; msg.style.color = 'var(--red)'; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Assigning...';
+
+  const { error } = await sb.from('tasks').insert({
+    project, task_detail: detail,
+    assigned_to_email: email.toLowerCase(),
+    assigned_to_name: name,
+    assigned_by_email: currentUser.email,
+    assigned_by_name: currentUser.name,
+    start_date: start, end_date: end, tat_date: tat,
+    work_status: 'Not Started', ceo_approval: 'Pending'
+  });
+
+  btn.disabled = false; btn.textContent = '➕ Assign Task';
+
+  if (error) { msg.textContent = '❌ Error: ' + error.message; msg.style.color = 'var(--red)'; return; }
+
+  msg.textContent = '✅ Task assigned successfully!'; msg.style.color = 'var(--green)';
+  showToast('✅ Task assigned to ' + name, 'ok');
+  document.getElementById('at-name').value = '';
+  document.getElementById('at-email').value = '';
+  document.getElementById('at-project').value = '';
+  document.getElementById('at-detail').value = '';
+  document.getElementById('at-end').value = '';
+  document.getElementById('at-tat').value = '';
+  setTimeout(() => msg.textContent = '', 4000);
+}
+
+// ══════════════════════════════════════════
+//  ATTENDANCE
+// ══════════════════════════════════════════
+async function loadAttendance() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).eq('date', today).single();
+
+  const checkInBtn = document.getElementById('checkInBtn');
+  const checkOutBtn = document.getElementById('checkOutBtn');
+  const checkedMsg = document.getElementById('attCheckedMsg');
+  const statusText = document.getElementById('attStatusText');
+
+  if (!todayAtt) {
+    checkInBtn.style.display = 'block';
+    checkOutBtn.style.display = 'none';
+    checkedMsg.style.display = 'none';
+    statusText.textContent = 'You have not checked in today.';
+  } else if (todayAtt.check_in && !todayAtt.check_out) {
+    checkInBtn.style.display = 'none';
+    checkOutBtn.style.display = 'block';
+    checkedMsg.style.display = 'none';
+    statusText.textContent = 'Checked in at ' + new Date(todayAtt.check_in).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  } else {
+    checkInBtn.style.display = 'none';
+    checkOutBtn.style.display = 'none';
+    checkedMsg.style.display = 'block';
+    checkedMsg.textContent = '✅ Attendance complete for today!';
+    statusText.textContent = 'Check-in: ' + new Date(todayAtt.check_in).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) +
+      ' | Check-out: ' + new Date(todayAtt.check_out).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Load month stats
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const { data: monthAtt } = await sb.from('attendance').select('status').eq('employee_email', currentUser.email).gte('date', monthStart);
+
+  const present = (monthAtt || []).filter(a => a.status === 'Present').length;
+  const absent = (monthAtt || []).filter(a => a.status === 'Absent').length;
+  const half = (monthAtt || []).filter(a => a.status === 'Half Day').length;
+  const leave = (monthAtt || []).filter(a => a.status === 'Leave').length;
+  document.getElementById('att-present').textContent = present;
+  document.getElementById('att-absent').textContent = absent;
+  document.getElementById('att-half').textContent = half;
+  document.getElementById('att-leave').textContent = leave;
+
+  // Table
+  const { data: allAtt } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).order('date', { ascending: false }).limit(30);
+  const tbody = document.getElementById('attBody');
+  if (!allAtt || !allAtt.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">No attendance records</td></tr>';
+    return;
+  }
+  tbody.innerHTML = allAtt.map(a => `<tr>
+    <td style="font-weight:600">${fmtDate(a.date)}</td>
+    <td>${a.check_in ? new Date(a.check_in).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+    <td>${a.check_out ? new Date(a.check_out).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+    <td>${a.working_hours ? a.working_hours + ' hrs' : '—'}</td>
+    <td>${attBadge(a.status)}</td>
+  </tr>`).join('');
+}
+
+async function markCheckIn() {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const btn = document.getElementById('checkInBtn');
+  btn.disabled = true; btn.textContent = 'Checking in...';
+
+  const { data: emp } = await sb.from('employees').select('id').eq('email', currentUser.email).single();
+
+  const { error } = await sb.from('attendance').insert({
+    employee_id: emp?.id,
+    employee_email: currentUser.email,
+    employee_name: currentUser.name,
+    date: today,
+    check_in: now.toISOString(),
+    status: 'Present'
+  });
+
+  btn.disabled = false; btn.textContent = '✅ Check In';
+  if (error) { showToast('❌ Error: ' + error.message, 'err'); return; }
+  showToast('✅ Checked in successfully!', 'ok');
+  loadAttendance();
+}
+
+async function markCheckOut() {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const btn = document.getElementById('checkOutBtn');
+  btn.disabled = true; btn.textContent = 'Checking out...';
+
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).eq('date', today).single();
+
+  if (!todayAtt) { showToast('❌ No check-in found!', 'err'); btn.disabled = false; btn.textContent = '🚪 Check Out'; return; }
+
+  const checkIn = new Date(todayAtt.check_in);
+  const hrs = ((now - checkIn) / 3600000).toFixed(2);
+
+  const { error } = await sb.from('attendance').update({
+    check_out: now.toISOString(),
+    working_hours: hrs,
+    status: hrs < 4 ? 'Half Day' : 'Present'
+  }).eq('id', todayAtt.id);
+
+  btn.disabled = false; btn.textContent = '🚪 Check Out';
+  if (error) { showToast('❌ Error: ' + error.message, 'err'); return; }
+  showToast('✅ Checked out! Hours worked: ' + hrs, 'ok');
+  loadAttendance();
+}
+
+// ══════════════════════════════════════════
+//  LEAVES
+// ══════════════════════════════════════════
+async function loadLeaves() {
+  const { data } = await sb.from('leaves').select('*').eq('employee_email', currentUser.email).order('created_at', { ascending: false });
+  const leaves = data || [];
+  const pending = leaves.filter(l => l.status === 'Pending').length;
+  const taken = leaves.filter(l => l.status === 'Approved').reduce((s, l) => s + (l.total_days || 0), 0);
+  document.getElementById('lv-pending').textContent = pending;
+  document.getElementById('lv-taken').textContent = taken;
+
+  const tbody = document.getElementById('leaveBody');
+  if (!leaves.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No leave records</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leaves.map(l => `<tr>
+    <td><span class="badge b-blue">${esc(l.leave_type)}</span></td>
+    <td style="font-size:12px">${fmtDate(l.from_date)}</td>
+    <td style="font-size:12px">${fmtDate(l.to_date)}</td>
+    <td style="font-weight:700">${l.total_days || 1}</td>
+    <td style="font-size:12px;color:var(--muted)">${esc(l.reason || '—')}</td>
+    <td>${leaveBadge(l.status)}</td>
+  </tr>`).join('');
+}
+
+async function applyLeave() {
+  const type = document.getElementById('lv-type').value;
+  const from = document.getElementById('lv-from').value;
+  const to = document.getElementById('lv-to').value;
+  const reason = document.getElementById('lv-reason').value.trim();
+  const msg = document.getElementById('leaveMsg');
+
+  if (!from || !to || !reason) { msg.textContent = '⚠️ Fill all fields'; msg.style.color = 'var(--red)'; return; }
+
+  const days = Math.ceil((new Date(to) - new Date(from)) / 86400000) + 1;
+  const { data: emp } = await sb.from('employees').select('id').eq('email', currentUser.email).single();
+
+  const { error } = await sb.from('leaves').insert({
+    employee_id: emp?.id,
+    employee_email: currentUser.email,
+    employee_name: currentUser.name,
+    leave_type: type, from_date: from, to_date: to,
+    total_days: days, reason, status: 'Pending'
+  });
+
+  if (error) { msg.textContent = '❌ ' + error.message; msg.style.color = 'var(--red)'; return; }
+  msg.textContent = '✅ Leave applied successfully!'; msg.style.color = 'var(--green)';
+  showToast('✅ Leave application submitted!', 'ok');
+  document.getElementById('lv-from').value = '';
+  document.getElementById('lv-to').value = '';
+  document.getElementById('lv-reason').value = '';
+  loadLeaves();
+  setTimeout(() => msg.textContent = '', 4000);
+}
+
+// ══════════════════════════════════════════
+//  NOTICES
+// ══════════════════════════════════════════
+async function loadNotices() {
+  const { data } = await sb.from('notices').select('*').eq('is_active', true).order('created_at', { ascending: false });
+  const el = document.getElementById('noticesList');
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📢</div><div class="empty-title">No notices yet</div></div>';
+    return;
+  }
+  el.innerHTML = data.map(n => `
+    <div class="notice-card ${n.priority.toLowerCase()}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div class="notice-title">${esc(n.title)}</div>
+        <span class="badge ${n.priority === 'Urgent' ? 'b-red' : n.priority === 'High' ? 'b-gold' : 'b-blue'}">${n.priority}</span>
+      </div>
+      <div class="notice-body" style="margin-top:8px">${esc(n.content)}</div>
+      <div class="notice-meta">
+        <span>👤 ${esc(n.created_by_name)}</span>
+        <span>🕐 ${new Date(n.created_at).toLocaleDateString('en-IN')}</span>
+        <span>🎯 ${esc(n.target)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function postNotice() {
+  const title = document.getElementById('nt-title').value.trim();
+  const content = document.getElementById('nt-content').value.trim();
+  const priority = document.getElementById('nt-priority').value;
+  const target = document.getElementById('nt-target').value;
+  const msg = document.getElementById('noticeMsg');
+
+  if (!title || !content) { msg.textContent = '⚠️ Fill all fields'; msg.style.color = 'var(--red)'; return; }
+
+  const { error } = await sb.from('notices').insert({
+    title, content, priority, target,
+    created_by_email: currentUser.email,
+    created_by_name: currentUser.name
+  });
+
+  if (error) { msg.textContent = '❌ ' + error.message; msg.style.color = 'var(--red)'; return; }
+  msg.textContent = '✅ Notice posted!'; msg.style.color = 'var(--green)';
+  showToast('✅ Notice posted successfully!', 'ok');
+  document.getElementById('nt-title').value = '';
+  document.getElementById('nt-content').value = '';
+  loadNotices();
+  setTimeout(() => msg.textContent = '', 4000);
+}
+
+// ══════════════════════════════════════════
+//  ALL TASKS (CEO)
+// ══════════════════════════════════════════
+async function loadAllTasks() {
+  const { data } = await sb.from('tasks').select('*').order('created_at', { ascending: false });
+  allTasksData = data || [];
+  renderAllTasks();
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const total = allTasksData.length;
+  const ip = allTasksData.filter(t => t.work_status === 'In Progress').length;
+  const done = allTasksData.filter(t => t.work_status === 'Completed').length;
+  const delayed = allTasksData.filter(t => {
+    const tat = t.tat_date ? new Date(t.tat_date) : null;
+    return tat && today > tat && t.work_status !== 'Completed';
+  }).length;
+
+  document.getElementById('allTaskStats').innerHTML = `
+    <div class="stat-card sc-navy"><div class="stat-num">${total}</div><div class="stat-lbl">Total Tasks</div></div>
+    <div class="stat-card sc-blue"><div class="stat-num">${ip}</div><div class="stat-lbl">In Progress</div></div>
+    <div class="stat-card sc-red"><div class="stat-num">${delayed}</div><div class="stat-lbl">Delayed</div></div>
+    <div class="stat-card sc-green"><div class="stat-num">${done}</div><div class="stat-lbl">Completed</div></div>
+  `;
+}
+
+function filterAllTasks(val) { allTasksFilter = val; renderAllTasks(); }
+
+function renderAllTasks() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let data = allTasksData;
+  if (allTasksFilter === 'Delayed') {
+    data = data.filter(t => { const tat = t.tat_date ? new Date(t.tat_date) : null; return tat && today > tat && t.work_status !== 'Completed'; });
+  } else if (allTasksFilter !== 'all') {
+    data = data.filter(t => t.work_status === allTasksFilter);
+  }
+  const tbody = document.getElementById('allTasksBody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No tasks</td></tr>'; return; }
+  tbody.innerHTML = data.map((t, i) => {
+    const tat = t.tat_date ? new Date(t.tat_date) : null;
+    const isLate = tat && today > tat && t.work_status !== 'Completed';
+    return `<tr style="${isLate ? 'background:#fdf0ee' : ''}">
+      <td style="color:var(--muted);font-size:11px">${i + 1}</td>
+      <td><span style="background:#e8ecf5;color:var(--navy);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${esc(t.project)}</span></td>
+      <td style="font-weight:600;max-width:180px;font-size:12px">${esc(t.task_detail.substring(0, 50))}...</td>
+      <td style="font-size:12px">${esc(t.assigned_to_name)}</td>
+      <td style="font-size:11px;font-weight:700;color:${isLate ? 'var(--red)' : 'var(--muted)'}">${fmtDate(t.tat_date)}</td>
+      <td>${statusBadge(t.work_status)}</td>
+      <td>${ceoBadge(t.ceo_approval)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  EMPLOYEES (CEO)
+// ══════════════════════════════════════════
+async function loadEmployees() {
+  const { data } = await sb.from('employees').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('employeesBody');
+  if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No employees</td></tr>'; return; }
+  tbody.innerHTML = data.map(e => `<tr>
+    <td style="font-weight:700;color:var(--navy)">${esc(e.employee_code)}</td>
+    <td>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="av" style="background:var(--navy)">${esc(e.name).substring(0, 2).toUpperCase()}</div>
+        <span style="font-weight:600">${esc(e.name)}</span>
+      </div>
+    </td>
+    <td style="font-size:12px">${esc(e.email)}</td>
+    <td style="font-size:12px">${esc(e.department || '—')}</td>
+    <td style="font-size:12px">${esc(e.designation || '—')}</td>
+    <td><span class="badge ${e.role === 'ceo' ? 'b-gold' : e.role === 'manager' ? 'b-purple' : 'b-navy'}">${e.role.toUpperCase()}</span></td>
+    <td><span class="badge ${e.is_active ? 'b-green' : 'b-red'}">${e.is_active ? 'Active' : 'Inactive'}</span></td>
+  </tr>`).join('');
+}
+
+function openAddEmpModal() { document.getElementById('addEmpModal').classList.add('open'); }
+
+async function addEmployee() {
+  const name = document.getElementById('ae-name').value.trim();
+  const email = document.getElementById('ae-email').value.trim();
+  const phone = document.getElementById('ae-phone').value.trim();
+  const code = document.getElementById('ae-code').value.trim();
+  const dept = document.getElementById('ae-dept').value.trim();
+  const desig = document.getElementById('ae-desig').value.trim();
+  const role = document.getElementById('ae-role').value;
+  const pass = document.getElementById('ae-pass').value.trim();
+
+  if (!name || !email || !code || !pass) { showToast('⚠️ Fill required fields!', 'err'); return; }
+
+  const { error } = await sb.from('employees').insert({
+    name, email: email.toLowerCase(), phone, employee_code: code,
+    department: dept, designation: desig, role, password_hash: pass
+  });
+
+  if (error) { showToast('❌ Error: ' + error.message, 'err'); return; }
+  showToast('✅ Employee added successfully!', 'ok');
+  closeModal('addEmpModal');
+  loadEmployees();
+  loadEmployeeAutocomplete();
+}
+
+// ══════════════════════════════════════════
+//  ATTENDANCE REPORT (CEO)
+// ══════════════════════════════════════════
+async function loadAttReport() {
+  const monthVal = document.getElementById('att-month-filter').value;
+  if (!monthVal) return;
+  const [yr, mo] = monthVal.split('-');
+  const start = `${yr}-${mo}-01`;
+  const end = new Date(yr, mo, 0).toISOString().split('T')[0];
+
+  const { data: emps } = await sb.from('employees').select('name,email').eq('is_active', true);
+  const { data: attData } = await sb.from('attendance').select('*').gte('date', start).lte('date', end);
+
+  const tbody = document.getElementById('attReportBody');
+  if (!emps) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px">No data</td></tr>'; return; }
+
+  const totalDays = new Date(yr, mo, 0).getDate();
+  tbody.innerHTML = emps.map(e => {
+    const empAtt = (attData || []).filter(a => a.employee_email === e.email);
+    const present = empAtt.filter(a => a.status === 'Present').length;
+    const absent = empAtt.filter(a => a.status === 'Absent').length;
+    const half = empAtt.filter(a => a.status === 'Half Day').length;
+    const leave = empAtt.filter(a => a.status === 'Leave').length;
+    const pct = totalDays > 0 ? Math.round((present / totalDays) * 100) : 0;
+    return `<tr>
+      <td style="font-weight:600">${esc(e.name)}</td>
+      <td><span class="badge b-green">${present}</span></td>
+      <td><span class="badge b-red">${absent}</span></td>
+      <td><span class="badge b-amber">${half}</span></td>
+      <td><span class="badge b-blue">${leave}</span></td>
+      <td style="font-weight:700">${totalDays}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:${pct}%;background:${pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)'}"></div></div>
+          <span style="font-size:12px;font-weight:700;color:${pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)'}">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  LEAVE APPROVALS (CEO)
+// ══════════════════════════════════════════
+async function loadLeaveApprovals() {
+  const { data } = await sb.from('leaves').select('*').order('created_at', { ascending: false });
+  const el = document.getElementById('leaveApproveList');
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No leave requests</div></div>';
+    return;
+  }
+  const pending = data.filter(l => l.status === 'Pending');
+  const others = data.filter(l => l.status !== 'Pending');
+  el.innerHTML = (pending.length ? `
+    <div class="section-div"><div class="sd-line"></div><div class="sd-label">Pending Requests (${pending.length})</div><div class="sd-line"></div></div>
+    ${pending.map(l => leaveCard(l, true)).join('')}
+  ` : '') + (others.length ? `
+    <div class="section-div"><div class="sd-line"></div><div class="sd-label">Processed Requests</div><div class="sd-line"></div></div>
+    ${others.map(l => leaveCard(l, false)).join('')}
+  ` : '');
+
+  document.getElementById('nb-leave-approve').textContent = pending.length;
+  document.getElementById('nb-leave-approve').style.display = pending.length > 0 ? 'inline-block' : 'none';
+}
+
+function leaveCard(l, canApprove) {
+  return `<div class="panel" style="margin-bottom:12px">
+    <div class="panel-body">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy)">${esc(l.employee_name)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(l.leave_type)} Leave · ${fmtDate(l.from_date)} to ${fmtDate(l.to_date)} · ${l.total_days} day(s)</div>
+          <div style="font-size:12px;margin-top:6px">${esc(l.reason || '—')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          ${leaveBadge(l.status)}
+          ${canApprove ? `<div style="display:flex;gap:8px">
+            <button class="btn btn-green btn-sm" onclick="approveLeave('${l.id}', 'Approved')">✅ Approve</button>
+            <button class="btn btn-red btn-sm" onclick="approveLeave('${l.id}', 'Rejected')">❌ Reject</button>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function approveLeave(id, status) {
+  const { error } = await sb.from('leaves').update({ status, approved_by: currentUser.name, approved_at: new Date().toISOString() }).eq('id', id);
+  if (error) { showToast('❌ Error: ' + error.message, 'err'); return; }
+  showToast(`✅ Leave ${status}!`, 'ok');
+  loadLeaveApprovals();
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return dt.getDate() + '-' + months[dt.getMonth()] + '-' + dt.getFullYear();
+}
+
+function statusBadge(s) {
+  const map = {
+    'Not Started': 'b-gray',
+    'In Progress': 'b-blue',
+    'Sent for Review': 'b-amber',
+    'Completed': 'b-green'
+  };
+  return `<span class="badge ${map[s] || 'b-gray'}">${esc(s)}</span>`;
+}
+
+function ceoBadge(v) {
+  if (v === 'Finalize with SG') return '<span class="badge b-green">✓ SG</span>';
+  if (v === 'Finalize with YG') return '<span class="badge b-green">✓ YG</span>';
+  return '<span class="badge b-amber">Pending</span>';
+}
+
+function attBadge(s) {
+  const map = { 'Present': 'b-green', 'Absent': 'b-red', 'Half Day': 'b-amber', 'Leave': 'b-blue', 'Holiday': 'b-purple' };
+  return `<span class="badge ${map[s] || 'b-gray'}">${esc(s)}</span>`;
+}
+
+function leaveBadge(s) {
+  const map = { 'Pending': 'b-amber', 'Approved': 'b-green', 'Rejected': 'b-red' };
+  return `<span class="badge ${map[s] || 'b-gray'}">${esc(s)}</span>`;
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 4000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
