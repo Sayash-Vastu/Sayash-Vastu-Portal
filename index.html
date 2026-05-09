@@ -6,6 +6,7 @@
 <title>Sayash Vastu — Company Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root {
   --navy: #0f1c3f;
@@ -910,6 +911,10 @@ tbody tr:hover{background:#fafbff}
           <h2>All Tasks</h2>
           <p>Complete task overview for all employees</p>
         </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="sendDailySummaryEmail('Morning')">📧 Send Morning Summary</button>
+          <button class="btn btn-primary" onclick="sendDailySummaryEmail('Evening')">📧 Send Evening Summary</button>
+        </div>
         <div class="stat-grid" id="allTaskStats"></div>
         <div class="panel">
           <div class="panel-head">
@@ -1035,6 +1040,90 @@ const SUPABASE_KEY = 'sb_publishable_Qi90wjrEak0zpymXEecNbQ_C30agpsx';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ══════════════════════════════════════════
+//  EMAILJS CONFIG
+// ══════════════════════════════════════════
+const EJS_PUBLIC_KEY   = 'UJnNfp5bX02L9vf6e';
+const EJS_SERVICE_ID   = 'service_tntf75k';
+const EJS_TEMPLATE_ID  = 'template_7164mdh';
+const CEO_EMAIL        = 'testsayash@gmail.com';
+emailjs.init(EJS_PUBLIC_KEY);
+
+// ── Send Email Helper ──
+async function sendEmail(toEmail, toName, title, message) {
+  try {
+    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
+      to_email : toEmail,
+      to_name  : toName,
+      name     : 'Sayash Vastu Portal',
+      title    : title,
+      message  : message,
+      email    : CEO_EMAIL,
+    });
+    console.log('Email sent to', toEmail);
+  } catch (err) {
+    console.error('Email error:', err);
+  }
+}
+
+// ── Daily Summary Email ──
+async function sendDailySummaryEmail(period) {
+  try {
+    const { data: tasks } = await sb.from('tasks').select('*').order('created_at', { ascending: false });
+    const { data: leaves } = await sb.from('leaves').select('*').eq('status', 'Pending');
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const total     = (tasks||[]).length;
+    const inProg    = (tasks||[]).filter(t => t.work_status === 'In Progress').length;
+    const completed = (tasks||[]).filter(t => t.work_status === 'Completed').length;
+    const notStart  = (tasks||[]).filter(t => t.work_status === 'Not Started').length;
+    const delayed   = (tasks||[]).filter(t => {
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      return tat && today > tat && t.work_status !== 'Completed';
+    }).length;
+    const pendingLeaves = (leaves||[]).length;
+
+    // Build task list
+    let taskLines = (tasks||[]).slice(0, 15).map(t => {
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      const isLate = tat && today > tat && t.work_status !== 'Completed';
+      return `• ${t.project} | ${t.assigned_to_name} | ${t.work_status}${isLate ? ' ⚠️ DELAYED' : ''}`;
+    }).join('\n');
+
+    // Build leave list
+    let leaveLines = pendingLeaves > 0
+      ? (leaves||[]).map(l => `• ${l.employee_name} | ${l.leave_type} | ${l.from_date} to ${l.to_date}`).join('\n')
+      : 'No pending leaves';
+
+    const message = `
+📊 ${period} SUMMARY — ${new Date().toLocaleDateString('en-IN')}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 TASK OVERVIEW:
+Total Tasks: ${total}
+✅ Completed: ${completed}
+⚡ In Progress: ${inProg}
+○ Not Started: ${notStart}
+⚠️ Delayed: ${delayed}
+
+📋 TASK DETAILS:
+${taskLines}
+
+🏖️ PENDING LEAVE REQUESTS (${pendingLeaves}):
+${leaveLines}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+View full details: sayash-vastu-portal.vercel.app
+    `.trim();
+
+    await sendEmail(CEO_EMAIL, 'CEO', `${period} Report — Sayash Vastu`, message);
+    showToast(`✅ ${period} summary sent to CEO!`, 'ok');
+  } catch (err) {
+    console.error('Summary email error:', err);
+    showToast('❌ Email send failed!', 'err');
+  }
+}
+
+// ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
 let currentUser = null;
@@ -1063,6 +1152,25 @@ window.onload = function() {
   document.getElementById('loginPass').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') doLogin();
   });
+
+  // ★ Auto Summary Email — Subah 8 baje + Sham 6 baje
+  setInterval(function() {
+    if (!currentUser || (currentUser.role !== 'ceo' && currentUser.role !== 'manager')) return;
+    const now   = new Date();
+    const hr    = now.getHours();
+    const min   = now.getMinutes();
+    const today = now.toDateString();
+    const lastMorning = localStorage.getItem('sv_last_morning');
+    const lastEvening = localStorage.getItem('sv_last_evening');
+    if (hr === 8 && min < 5 && lastMorning !== today) {
+      localStorage.setItem('sv_last_morning', today);
+      sendDailySummaryEmail('Morning');
+    }
+    if (hr === 18 && min < 5 && lastEvening !== today) {
+      localStorage.setItem('sv_last_evening', today);
+      sendDailySummaryEmail('Evening');
+    }
+  }, 60000);
 };
 
 function updateClock() {
@@ -1711,6 +1819,15 @@ async function applyLeave() {
   if (error) { msg.textContent = '❌ ' + error.message; msg.style.color = 'var(--red)'; return; }
   msg.textContent = '✅ Leave applied successfully!'; msg.style.color = 'var(--green)';
   showToast('✅ Leave application submitted!', 'ok');
+
+  // ★ Email CEO when leave applied
+  await sendEmail(
+    CEO_EMAIL,
+    'CEO',
+    `Leave Request — ${currentUser.name}`,
+    `${currentUser.name} has applied for ${type} leave.\n\nFrom: ${from}\nTo: ${to}\nDays: ${days}\nReason: ${reason}\n\nPlease login to approve/reject:\nsayash-vastu-portal.vercel.app`
+  );
+
   document.getElementById('lv-from').value = '';
   document.getElementById('lv-to').value = '';
   document.getElementById('lv-reason').value = '';
@@ -1956,9 +2073,24 @@ function leaveCard(l, canApprove) {
 }
 
 async function approveLeave(id, status) {
+  // Get leave details first
+  const { data: leave } = await sb.from('leaves').select('*').eq('id', id).single();
   const { error } = await sb.from('leaves').update({ status, approved_by: currentUser.name, approved_at: new Date().toISOString() }).eq('id', id);
   if (error) { showToast('❌ Error: ' + error.message, 'err'); return; }
   showToast(`✅ Leave ${status}!`, 'ok');
+
+  // ★ Email employee about decision
+  if (leave) {
+    const empEmail = leave.employee_email;
+    const empName  = leave.employee_name;
+    const icon     = status === 'Approved' ? '✅' : '❌';
+    await sendEmail(
+      empEmail,
+      empName,
+      `${icon} Leave ${status} — Sayash Vastu`,
+      `Dear ${empName},\n\nYour ${leave.leave_type} leave request has been ${status} by ${currentUser.name}.\n\nLeave Period: ${leave.from_date} to ${leave.to_date}\nDays: ${leave.total_days}\n\nPlease login for more details:\nsayash-vastu-portal.vercel.app`
+    );
+  }
   loadLeaveApprovals();
 }
 
