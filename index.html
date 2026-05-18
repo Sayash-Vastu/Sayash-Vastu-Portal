@@ -1751,6 +1751,17 @@ async function assignTask() {
   'https://sayash-vastu-portal.vercel.app',
   'View My Tasks →'
 );
+  ['at-project','at-detail','at-end','at-tat'].forEach(id => document.getElementById(id).value='');
+  if (currentUser.role!=='employee') {
+    document.getElementById('at-name').value='';
+    document.getElementById('at-email').value='';
+  }
+  setTimeout(()=>msg.textContent='',4000);
+}
+
+// ═══════════════════════════════════════════
+//  ATTENDANCE
+);
 
 // ═══════════════════════════════════════════
 //  ATTENDANCE
