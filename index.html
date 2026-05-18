@@ -837,7 +837,7 @@ tbody tr:hover{background:#fafbff}
           <div class="panel-head"><div class="panel-title">📋 My Leave History</div></div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th></tr></thead>
+              <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
               <tbody id="leaveBody"></tbody>
             </table>
           </div>
@@ -1339,12 +1339,16 @@ function showApp() {
     });
     document.getElementById('ceo-section').style.display = 'block';
     document.getElementById('ceo-notice-form').style.display = 'block';
+    // CEO ko My Tasks nahi chahiye
+    document.getElementById('nav-tasks').style.display = 'none';
+    document.getElementById('nav-assign').style.display = 'none';
   } else {
     ['nav-all-tasks','nav-employees','nav-att-report','nav-leave-approve'].forEach(id => {
       document.getElementById(id).style.display = 'none';
     });
     document.getElementById('ceo-section').style.display = 'none';
     document.getElementById('ceo-notice-form').style.display = 'none';
+    document.getElementById('nav-tasks').style.display = 'flex';
   }
 
   if (currentUser.role === 'employee') {
@@ -1868,6 +1872,7 @@ async function loadLeaves() {
     <td style="font-weight:700">${l.total_days||1}</td>
     <td style="font-size:12px;color:var(--muted)">${esc(l.reason||'—')}</td>
     <td>${leaveBadge(l.status)}</td>
+    <td>${l.status==='Pending'?`<button onclick="cancelLeave('${l.id}')" style="background:#fdf0ee;color:var(--red);border:1px solid var(--red-bg);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">Cancel</button>`:'—'}</td>
   </tr>`).join('');
 }
 
@@ -1914,10 +1919,13 @@ async function loadNotices() {
         <span class="badge ${n.priority==='Urgent'?'b-red':n.priority==='High'?'b-gold':'b-blue'}">${n.priority}</span>
       </div>
       <div class="notice-body" style="margin-top:8px">${esc(n.content)}</div>
-      <div class="notice-meta">
-        <span>👤 ${esc(n.created_by_name)}</span>
-        <span>🕐 ${new Date(n.created_at).toLocaleDateString('en-IN')}</span>
-        <span>🎯 ${esc(n.target)}</span>
+      <div class="notice-meta" style="justify-content:space-between">
+        <div style="display:flex;gap:12px">
+          <span>👤 ${esc(n.created_by_name)}</span>
+          <span>🕐 ${new Date(n.created_at).toLocaleDateString('en-IN')}</span>
+          <span>🎯 ${esc(n.target)}</span>
+        </div>
+        ${currentUser.role==='ceo'||currentUser.role==='manager'?`<button onclick="deleteNotice('${n.id}')" style="background:#fdf0ee;color:var(--red);border:1px solid var(--red-bg);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">🗑️ Delete</button>`:''}
       </div>
     </div>
   `).join('');
@@ -2023,7 +2031,12 @@ async function loadEmployees() {
     <td style="font-size:12px">${esc(e.department||'—')}</td>
     <td style="font-size:12px">${esc(e.designation||'—')}</td>
     <td><span class="badge ${e.role==='ceo'?'b-gold':e.role==='manager'?'b-purple':'b-navy'}">${e.role.toUpperCase()}</span></td>
-    <td><span class="badge ${e.is_active?'b-green':'b-red'}">${e.is_active?'Active':'Inactive'}</span></td>
+    <td>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="badge ${e.is_active?'b-green':'b-red'}">${e.is_active?'Active':'Inactive'}</span>
+        ${e.role!=='ceo'?`<button class="btn btn-sm" onclick="toggleEmployee('${e.id}',${e.is_active})" style="padding:3px 8px;font-size:10px;background:${e.is_active?'#fdf0ee':'#e6f5ee'};color:${e.is_active?'var(--red)':'var(--green)'};border-color:${e.is_active?'var(--red-bg)':'var(--green-bg)'}">${e.is_active?'Deactivate':'Activate'}</button>`:''}
+      </div>
+    </td>
   </tr>`).join('');
 }
 
@@ -2146,6 +2159,34 @@ async function approveLeave(id, status) {
     );
   }
   loadLeaveApprovals();
+}
+
+// ═══════════════════════════════════════════
+//  DELETE / TOGGLE HELPERS
+// ═══════════════════════════════════════════
+async function toggleEmployee(empId, isActive) {
+  const action = isActive ? 'deactivate' : 'activate';
+  if (!confirm(`Are you sure you want to ${action} this employee?`)) return;
+  const { error } = await sb.from('employees').update({ is_active: !isActive }).eq('id', empId);
+  if (error) { showToast('❌ ' + error.message, 'err'); return; }
+  showToast(`✅ Employee ${action}d!`, 'ok');
+  loadEmployees();
+}
+
+async function deleteNotice(noticeId) {
+  if (!confirm('Delete this notice?')) return;
+  const { error } = await sb.from('notices').update({ is_active: false }).eq('id', noticeId);
+  if (error) { showToast('❌ ' + error.message, 'err'); return; }
+  showToast('✅ Notice deleted!', 'ok');
+  loadNotices();
+}
+
+async function cancelLeave(leaveId) {
+  if (!confirm('Cancel this leave request?')) return;
+  const { error } = await sb.from('leaves').delete().eq('id', leaveId);
+  if (error) { showToast('❌ ' + error.message, 'err'); return; }
+  showToast('✅ Leave cancelled!', 'ok');
+  loadLeaves();
 }
 
 // ═══════════════════════════════════════════
