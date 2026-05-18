@@ -660,6 +660,15 @@ tbody tr:hover{background:#fafbff}
         </div>
         <div id="ceoDashStats"></div>
         <div class="stat-grid" id="homeStats"></div>
+        <div id="ceoActivitySection" style="display:none;margin-bottom:20px">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">👁️ Live Company Activity</div>
+              <button class="btn btn-outline btn-sm" onclick="showView('allTasks')">All Tasks →</button>
+            </div>
+            <div id="ceoActivityFeed" style="padding:0"></div>
+          </div>
+        </div>
         <div class="home-grid">
           <div>
             <div class="panel">
@@ -1561,6 +1570,109 @@ async function loadHome() {
   }
 
   loadTodayAttendanceWidget();
+  if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
+    loadCeoActivityFeed();
+  }
+}
+
+async function loadCeoActivityFeed() {
+  document.getElementById('ceoActivitySection').style.display = 'block';
+  const { data: tasks } = await sb.from('tasks').select('*').order('updated_at',{ascending:false}).limit(20);
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', new Date().toISOString().split('T')[0]);
+  const el = document.getElementById('ceoActivityFeed');
+
+  if (!tasks || !tasks.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No activity yet</p></div>';
+    return;
+  }
+
+  // Group tasks by employee
+  const empMap = {};
+  tasks.forEach(t => {
+    if (!empMap[t.assigned_to_name]) empMap[t.assigned_to_name] = [];
+    empMap[t.assigned_to_name].push(t);
+  });
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<thead><tr style="background:#f8f9fc;border-bottom:1px solid var(--border)">';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Employee</th>';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Project</th>';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Current Task</th>';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Status</th>';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">TAT</th>';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Attendance</th>';
+  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Pending With</th>';
+  html += '</tr></thead><tbody>';
+
+  Object.keys(empMap).forEach(empName => {
+    const empTasks = empMap[empName];
+    const activeTasks = empTasks.filter(t => t.work_status !== 'Completed' && t.work_status !== 'Report Ready');
+    const attRecord = (todayAtt||[]).find(a => a.employee_name === empName);
+
+    if (!activeTasks.length) return;
+
+    activeTasks.forEach((t, idx) => {
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      const isLate = tat && today > tat;
+
+      // Who is it pending with?
+      let pendingWith = '—';
+      let pendingColor = 'var(--muted)';
+      if (t.work_status === 'Not Started' || t.work_status === 'In Progress') {
+        pendingWith = empName;
+        pendingColor = 'var(--blue)';
+      } else if (t.work_status === 'Sent to Senior') {
+        pendingWith = 'Senior Review';
+        pendingColor = 'var(--purple)';
+      } else if (t.work_status === 'Senior Approved') {
+        pendingWith = 'CEO Approval';
+        pendingColor = 'var(--gold)';
+      } else if (t.work_status === 'Sent for Review') {
+        pendingWith = 'Under Review';
+        pendingColor = 'var(--amber)';
+      }
+
+      // Attendance
+      let attBadgeHtml = '<span class="badge b-red">Absent</span>';
+      if (attRecord) {
+        if (attRecord.check_in && !attRecord.check_out) {
+          attBadgeHtml = '<span class="badge b-green">Present</span>';
+        } else if (attRecord.check_in && attRecord.check_out) {
+          attBadgeHtml = '<span class="badge b-blue">Checked Out</span>';
+        } else if (attRecord.status === 'Half Day') {
+          attBadgeHtml = '<span class="badge b-amber">Half Day</span>';
+        }
+      }
+
+      html += `<tr style="border-bottom:1px solid #f5f6fa;${isLate?'background:#fdf9ef':''}">
+        <td style="padding:10px 14px">
+          ${idx===0?`<div style="display:flex;align-items:center;gap:8px">
+            <div class="av" style="background:var(--navy);width:28px;height:28px;font-size:11px">${esc(empName).substring(0,2).toUpperCase()}</div>
+            <span style="font-weight:600;color:var(--navy)">${esc(empName)}</span>
+          </div>`:''}
+        </td>
+        <td style="padding:10px 14px">
+          <span style="background:#e8ecf5;color:var(--navy);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${esc(t.project)}</span>
+        </td>
+        <td style="padding:10px 14px;max-width:180px;color:var(--text)">
+          ${esc(t.task_detail.substring(0,45))}${t.task_detail.length>45?'...':''}
+        </td>
+        <td style="padding:10px 14px">${statusBadge(t.work_status)}</td>
+        <td style="padding:10px 14px;font-size:11px;font-weight:700;color:${isLate?'var(--red)':'var(--muted)'}">
+          ${fmtDate(t.tat_date)}${isLate?' ⚠️':''}
+        </td>
+        <td style="padding:10px 14px">${idx===0?attBadgeHtml:''}</td>
+        <td style="padding:10px 14px">
+          <span style="font-size:11px;font-weight:600;color:${pendingColor}">${pendingWith}</span>
+        </td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
 }
 
 async function loadTodayAttendanceWidget() {
