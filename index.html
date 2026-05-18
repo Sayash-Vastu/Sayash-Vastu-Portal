@@ -658,6 +658,7 @@ tbody tr:hover{background:#fafbff}
           <h2 id="homeGreeting">Good Morning! 👋</h2>
           <p id="homeSubtitle">Here's your overview for today</p>
         </div>
+        <div id="birthdayBanner" style="display:none;margin-bottom:16px"></div>
         <div id="ceoDashStats"></div>
         <div class="stat-grid" id="homeStats"></div>
         <div id="ceoActivitySection" style="display:none;margin-bottom:20px">
@@ -930,7 +931,7 @@ tbody tr:hover{background:#fafbff}
         <div class="panel">
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Department</th><th>Designation</th><th>Role</th><th>Status</th></tr></thead>
+              <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Department</th><th>Designation</th><th>DOB</th><th>Role</th><th>Status</th></tr></thead>
               <tbody id="employeesBody"></tbody>
             </table>
           </div>
@@ -1006,6 +1007,7 @@ tbody tr:hover{background:#fafbff}
         <div class="field"><label>Employee Code</label><input type="text" id="ae-code" placeholder="EMP005"/></div>
         <div class="field"><label>Department</label><input type="text" id="ae-dept" placeholder="Design"/></div>
         <div class="field"><label>Designation</label><input type="text" id="ae-desig" placeholder="Designer"/></div>
+        <div class="field"><label>Date of Birth</label><input type="date" id="ae-dob"/></div>
         <div class="field"><label>Role</label>
           <select id="ae-role"><option value="employee">Employee</option><option value="manager">Manager</option><option value="ceo">CEO</option></select>
         </div>
@@ -1020,6 +1022,26 @@ tbody tr:hover{background:#fafbff}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- PASSWORD CHANGE MODAL -->
+<div class="modal-overlay" id="passModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">🔑 Change Password</div>
+    <div style="margin-bottom:16px;padding:12px;background:#f8f9fc;border-radius:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--navy)" id="passEmpName">—</div>
+      <div style="font-size:11px;color:var(--muted)" id="passEmpEmail">—</div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>New Password</label>
+      <input type="text" id="new-pass" placeholder="Enter new password..."/>
+    </div>
+    <div id="passMsg" style="font-size:12px;font-weight:600;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('passModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="savePassword()">Save Password</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════
@@ -1570,6 +1592,7 @@ async function loadHome() {
   }
 
   loadTodayAttendanceWidget();
+  loadBirthdaySection();
   if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
     loadCeoActivityFeed();
   }
@@ -2247,11 +2270,13 @@ async function loadEmployees() {
     <td style="font-size:12px">${esc(e.email)}</td>
     <td style="font-size:12px">${esc(e.department||'—')}</td>
     <td style="font-size:12px">${esc(e.designation||'—')}</td>
+    <td style="font-size:12px">${e.date_of_birth?fmtDate(e.date_of_birth):'—'}</td>
     <td><span class="badge ${e.role==='ceo'?'b-gold':e.role==='manager'?'b-purple':'b-navy'}">${e.role.toUpperCase()}</span></td>
     <td>
-      <div style="display:flex;align-items:center;gap:6px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         <span class="badge ${e.is_active?'b-green':'b-red'}">${e.is_active?'Active':'Inactive'}</span>
         ${e.role!=='ceo'?`<button class="btn btn-sm" onclick="toggleEmployee('${e.id}',${e.is_active})" style="padding:3px 8px;font-size:10px;background:${e.is_active?'#fdf0ee':'#e6f5ee'};color:${e.is_active?'var(--red)':'var(--green)'};border-color:${e.is_active?'var(--red-bg)':'var(--green-bg)'}">${e.is_active?'Deactivate':'Activate'}</button>`:''}
+        ${currentUser && (currentUser.role==='ceo'||currentUser.role==='manager')?`<button class="btn btn-sm" onclick="openPassModal('${e.id}','${esc(e.name)}','${esc(e.email)}')" style="padding:3px 8px;font-size:10px;background:#eef2fb;color:var(--blue);border-color:#c0d0f0">🔑 Password</button>`:''}
       </div>
     </td>
   </tr>`).join('');
@@ -2269,9 +2294,11 @@ async function addEmployee() {
   const role=document.getElementById('ae-role').value;
   const pass=document.getElementById('ae-pass').value.trim();
   if (!name||!email||!code||!pass) { showToast('⚠️ Fill required fields!','err'); return; }
+  const dob = document.getElementById('ae-dob').value;
   const { error } = await sb.from('employees').insert({
     name, email: email.toLowerCase(), phone, employee_code: code,
-    department: dept, designation: desig, role, password_hash: pass
+    department: dept, designation: desig, role, password_hash: pass,
+    date_of_birth: dob || null
   });
   if (error) { showToast('❌ '+error.message,'err'); return; }
   showToast('✅ Employee added!','ok');
@@ -2384,6 +2411,86 @@ async function approveLeave(id, status) {
 // ═══════════════════════════════════════════
 //  DELETE / TOGGLE HELPERS
 // ═══════════════════════════════════════════
+// Password change
+let currentPassEmpId = null;
+function openPassModal(empId, empName, empEmail) {
+  currentPassEmpId = empId;
+  document.getElementById('passEmpName').textContent = empName;
+  document.getElementById('passEmpEmail').textContent = empEmail;
+  document.getElementById('new-pass').value = '';
+  document.getElementById('passMsg').textContent = '';
+  document.getElementById('passModal').classList.add('open');
+}
+
+async function savePassword() {
+  const newPass = document.getElementById('new-pass').value.trim();
+  const msgEl = document.getElementById('passMsg');
+  if (!newPass) { msgEl.textContent = '⚠️ Enter a password'; msgEl.style.color = 'var(--red)'; return; }
+  if (newPass.length < 6) { msgEl.textContent = '⚠️ Min 6 characters'; msgEl.style.color = 'var(--red)'; return; }
+  const { error } = await sb.from('employees').update({ password_hash: newPass }).eq('id', currentPassEmpId);
+  if (error) { msgEl.textContent = '❌ ' + error.message; msgEl.style.color = 'var(--red)'; return; }
+  showToast('✅ Password updated!', 'ok');
+  closeModal('passModal');
+}
+
+// Birthday check
+async function checkBirthdays() {
+  const today = new Date();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  const { data: emps } = await sb.from('employees').select('name,email,date_of_birth').eq('is_active',true);
+  if (!emps) return;
+  const bdays = emps.filter(e => {
+    if (!e.date_of_birth) return false;
+    const dob = new Date(e.date_of_birth);
+    return String(dob.getMonth()+1).padStart(2,'0') === mm && String(dob.getDate()).padStart(2,'0') === dd;
+  });
+  return bdays;
+}
+
+async function loadBirthdaySection() {
+  const bdays = await checkBirthdays();
+  if (!bdays || !bdays.length) return;
+  
+  // Show on dashboard
+  const bdayEl = document.getElementById('birthdayBanner');
+  if (bdayEl) {
+    bdayEl.style.display = 'block';
+    bdayEl.innerHTML = bdays.map(e => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,#fdf6e3,#fff8e7);border-radius:10px;border:1px solid #f0c96a;margin-bottom:8px">
+        <span style="font-size:24px">🎂</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">Happy Birthday, ${esc(e.name)}! 🎉</div>
+          <div style="font-size:11px;color:var(--muted)">Wishing a wonderful day!</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Send birthday wish emails
+    const lastBday = localStorage.getItem('sv_bday_sent_' + new Date().toDateString());
+    if (!lastBday) {
+      for (const emp of bdays) {
+        await sendEmail(
+          emp.email, emp.name,
+          '🎂 Happy Birthday from Sayash Vastu!',
+          `Dear ${emp.name},
+
+Wishing you a very Happy Birthday! 🎉🎂
+
+May this special day bring you joy, happiness and success.
+
+With warm wishes,
+Sayash Vastu Family`,
+          'Birthday',
+          'https://sayash-vastu-portal.vercel.app',
+          'Visit Portal →'
+        );
+      }
+      localStorage.setItem('sv_bday_sent_' + new Date().toDateString(), 'true');
+    }
+  }
+}
+
 async function toggleEmployee(empId, isActive) {
   const action = isActive ? 'deactivate' : 'activate';
   if (!confirm(`Are you sure you want to ${action} this employee?`)) return;
