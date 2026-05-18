@@ -1577,8 +1577,9 @@ async function loadHome() {
 
 async function loadCeoActivityFeed() {
   document.getElementById('ceoActivitySection').style.display = 'block';
-  const { data: tasks } = await sb.from('tasks').select('*').order('updated_at',{ascending:false}).limit(20);
+  const { data: tasks } = await sb.from('tasks').select('*').order('updated_at',{ascending:false});
   const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', new Date().toISOString().split('T')[0]);
+  const { data: emps } = await sb.from('employees').select('name,email,designation').eq('is_active',true);
   const el = document.getElementById('ceoActivityFeed');
 
   if (!tasks || !tasks.length) {
@@ -1586,92 +1587,102 @@ async function loadCeoActivityFeed() {
     return;
   }
 
-  // Group tasks by employee
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Group by employee - show summary card per employee
   const empMap = {};
   tasks.forEach(t => {
     if (!empMap[t.assigned_to_name]) empMap[t.assigned_to_name] = [];
     empMap[t.assigned_to_name].push(t);
   });
 
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-  html += '<thead><tr style="background:#f8f9fc;border-bottom:1px solid var(--border)">';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Employee</th>';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Project</th>';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Current Task</th>';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Status</th>';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">TAT</th>';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Attendance</th>';
-  html += '<th style="padding:10px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Pending With</th>';
-  html += '</tr></thead><tbody>';
+  let html = '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">';
 
   Object.keys(empMap).forEach(empName => {
     const empTasks = empMap[empName];
     const activeTasks = empTasks.filter(t => t.work_status !== 'Completed' && t.work_status !== 'Report Ready');
-    const attRecord = (todayAtt||[]).find(a => a.employee_name === empName);
-
-    if (!activeTasks.length) return;
-
-    activeTasks.forEach((t, idx) => {
+    const completedCount = empTasks.filter(t => t.work_status === 'Completed' || t.work_status === 'Report Ready').length;
+    const delayedCount = activeTasks.filter(t => {
       const tat = t.tat_date ? new Date(t.tat_date) : null;
-      const isLate = tat && today > tat;
+      return tat && today > tat;
+    }).length;
 
-      // Who is it pending with?
-      let pendingWith = '—';
-      let pendingColor = 'var(--muted)';
-      if (t.work_status === 'Not Started' || t.work_status === 'In Progress') {
-        pendingWith = empName;
-        pendingColor = 'var(--blue)';
-      } else if (t.work_status === 'Sent to Senior') {
-        pendingWith = 'Senior Review';
-        pendingColor = 'var(--purple)';
-      } else if (t.work_status === 'Senior Approved') {
-        pendingWith = 'CEO Approval';
-        pendingColor = 'var(--gold)';
-      } else if (t.work_status === 'Sent for Review') {
-        pendingWith = 'Under Review';
-        pendingColor = 'var(--amber)';
+    const attRecord = (todayAtt||[]).find(a => a.employee_name === empName);
+    const empInfo = (emps||[]).find(e => e.name === empName);
+
+    let attBadge = '<span class="badge b-red" style="font-size:10px">Absent</span>';
+    if (attRecord?.check_in && !attRecord?.check_out) attBadge = '<span class="badge b-green" style="font-size:10px">Present</span>';
+    else if (attRecord?.check_in && attRecord?.check_out) attBadge = '<span class="badge b-blue" style="font-size:10px">Checked Out</span>';
+    else if (attRecord?.status === 'Half Day') attBadge = '<span class="badge b-amber" style="font-size:10px">Half Day</span>';
+
+    // Most urgent/latest task
+    const urgentTask = activeTasks.sort((a,b) => {
+      const tatA = a.tat_date ? new Date(a.tat_date) : new Date('9999');
+      const tatB = b.tat_date ? new Date(b.tat_date) : new Date('9999');
+      return tatA - tatB;
+    })[0];
+
+    // Pending with
+    let pendingWith = '—'; let pendingColor = 'var(--muted)';
+    if (urgentTask) {
+      if (urgentTask.work_status === 'Not Started' || urgentTask.work_status === 'In Progress') {
+        pendingWith = empName; pendingColor = 'var(--blue)';
+      } else if (urgentTask.work_status === 'Sent to Senior') {
+        pendingWith = '🔍 Senior Review'; pendingColor = 'var(--purple)';
+      } else if (urgentTask.work_status === 'Senior Approved') {
+        pendingWith = '⏳ CEO Approval'; pendingColor = '#c9a84c';
+      } else if (urgentTask.work_status === 'Sent for Review') {
+        pendingWith = '🔄 Under Review'; pendingColor = 'var(--amber)';
       }
+    }
 
-      // Attendance
-      let attBadgeHtml = '<span class="badge b-red">Absent</span>';
-      if (attRecord) {
-        if (attRecord.check_in && !attRecord.check_out) {
-          attBadgeHtml = '<span class="badge b-green">Present</span>';
-        } else if (attRecord.check_in && attRecord.check_out) {
-          attBadgeHtml = '<span class="badge b-blue">Checked Out</span>';
-        } else if (attRecord.status === 'Half Day') {
-          attBadgeHtml = '<span class="badge b-amber">Half Day</span>';
-        }
-      }
+    const isLate = urgentTask && (() => { const tat = urgentTask.tat_date ? new Date(urgentTask.tat_date) : null; return tat && today > tat; })();
 
-      html += `<tr style="border-bottom:1px solid #f5f6fa;${isLate?'background:#fdf9ef':''}">
-        <td style="padding:10px 14px">
-          ${idx===0?`<div style="display:flex;align-items:center;gap:8px">
-            <div class="av" style="background:var(--navy);width:28px;height:28px;font-size:11px">${esc(empName).substring(0,2).toUpperCase()}</div>
-            <span style="font-weight:600;color:var(--navy)">${esc(empName)}</span>
+    html += `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;${isLate?'border-left:3px solid var(--red)':delayedCount===0&&activeTasks.length===0?'border-left:3px solid var(--green)':'border-left:3px solid var(--blue)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av" style="background:var(--navy);width:34px;height:34px;font-size:12px">${esc(empName).substring(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--navy)">${esc(empName)}</div>
+            <div style="font-size:10px;color:var(--muted)">${esc(empInfo?.designation||'')}</div>
+          </div>
+          ${attBadge}
+        </div>
+
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:800;color:var(--blue)">${activeTasks.length}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Active</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:800;color:var(--green)">${completedCount}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Done</div>
+          </div>
+          ${delayedCount>0?`<div style="text-align:center">
+            <div style="font-size:16px;font-weight:800;color:var(--red)">${delayedCount}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Delayed</div>
           </div>`:''}
-        </td>
-        <td style="padding:10px 14px">
-          <span style="background:#e8ecf5;color:var(--navy);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${esc(t.project)}</span>
-        </td>
-        <td style="padding:10px 14px;max-width:180px;color:var(--text)">
-          ${esc(t.task_detail.substring(0,45))}${t.task_detail.length>45?'...':''}
-        </td>
-        <td style="padding:10px 14px">${statusBadge(t.work_status)}</td>
-        <td style="padding:10px 14px;font-size:11px;font-weight:700;color:${isLate?'var(--red)':'var(--muted)'}">
-          ${fmtDate(t.tat_date)}${isLate?' ⚠️':''}
-        </td>
-        <td style="padding:10px 14px">${idx===0?attBadgeHtml:''}</td>
-        <td style="padding:10px 14px">
-          <span style="font-size:11px;font-weight:600;color:${pendingColor}">${pendingWith}</span>
-        </td>
-      </tr>`;
-    });
+        </div>
+
+        ${urgentTask?`<div style="background:#f8f9fc;border-radius:8px;padding:8px 12px;flex:1;min-width:200px;max-width:340px">
+          <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Current Task</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(urgentTask.project)} — ${esc(urgentTask.task_detail.substring(0,40))}${urgentTask.task_detail.length>40?'...':''}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            ${statusBadge(urgentTask.work_status)}
+            <span style="font-size:10px;color:${isLate?'var(--red)':'var(--muted)'};font-weight:600">TAT: ${fmtDate(urgentTask.tat_date)}${isLate?' ⚠️':''}</span>
+          </div>
+        </div>`:'<div style="font-size:12px;color:var(--green);font-weight:600">✅ All tasks completed!</div>'}
+
+        <div style="text-align:right">
+          <div style="font-size:11px;font-weight:600;color:${pendingColor}">${pendingWith}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Pending with</div>
+        </div>
+      </div>
+    </div>`;
   });
 
-  html += '</tbody></table>';
+  html += '</div>';
   el.innerHTML = html;
 }
 
@@ -1858,7 +1869,39 @@ async function saveTaskUpdate() {
   const { error } = await sb.from('tasks').update(updates).eq('id', currentTaskRow.id);
   if (error) { msgEl.textContent = '❌ ' + error.message; msgEl.style.color = 'var(--red)'; return; }
 
-  showToast('✅ Task updated!', 'ok');
+  // Send email to senior when task sent for review
+  if (status === 'Sent to Senior') {
+    const { data: seniors } = await sb.from('employees')
+      .select('name,email')
+      .eq('is_active', true)
+      .in('designation', ['Senior Vastu Research Analyst','Senior Designer','Project Head','Manager']);
+    if (seniors && seniors.length) {
+      for (const senior of seniors) {
+        await sendEmail(
+          senior.email, senior.name,
+          'Task Pending Your Review — Sayash Vastu',
+          `Dear ${senior.name},
+
+${currentUser.name} has completed a task and sent it for your review.
+
+Project: ${currentTaskRow.project}
+Task: ${currentTaskRow.task_detail}
+Comments: ${comments || 'No comments'}
+
+Please login to review and approve.
+
+Regards,
+Sayash Vastu Portal`,
+          'Senior Review',
+          'https://sayash-vastu-portal.vercel.app',
+          'Review Task →'
+        );
+      }
+    }
+    showToast('✅ Task sent to Senior for review!', 'ok');
+  } else {
+    showToast('✅ Task updated!', 'ok');
+  }
   closeModal('taskModal');
   loadMyTasks();
 }
