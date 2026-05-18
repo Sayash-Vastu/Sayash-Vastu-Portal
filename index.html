@@ -601,8 +601,8 @@ tbody tr:hover{background:#fafbff}
       </button>
 
       <div class="sidebar-section">HR</div>
-      <button class="nav-btn" onclick="showView('attendance')"><span class="ni">⏰</span><span>Attendance</span></button>
-      <button class="nav-btn" onclick="showView('leaves')" id="nav-leaves">
+      <button class="nav-btn" id="nav-attendance" onclick="showView('attendance')"><span class="ni">⏰</span><span>Attendance</span></button>
+      <button class="nav-btn" id="nav-leaves" onclick="showView('leaves')">
         <span class="ni">🏖️</span><span>Leave</span><span class="nav-badge" id="nb-leaves" style="display:none">0</span>
       </button>
       <button class="nav-btn" onclick="showView('notices')"><span class="ni">📢</span><span>Notice Board</span></button>
@@ -1132,7 +1132,7 @@ async function sendDailySummaryEmail(period) {
       ? (leaves||[]).map(l => `• ${l.employee_name} | ${l.leave_type} | ${l.from_date} to ${l.to_date}`).join('\n')
       : 'No pending leaves';
     const message = `📊 ${period} SUMMARY — ${new Date().toLocaleDateString('en-IN')}\n${'━'.repeat(30)}\n\n📋 TASK OVERVIEW:\nTotal: ${total} | ✅ Done: ${completed} | ⚡ In Progress: ${inProg} | ○ Not Started: ${notStart} | ⚠️ Delayed: ${delayed}\n\n📋 TASK DETAILS:\n${taskLines}\n\n🏖️ PENDING LEAVES (${pendingLeaves}):\n${leaveLines}\n\n${'━'.repeat(30)}\nView: sayash-vastu-portal.vercel.app`.trim();
-    await sendEmail(CEO_EMAIL, 'CEO', `${period} Report — Sayash Vastu`, message);
+    await sendEmail(CEO_EMAIL, 'CEO Admin', `${period} Report — Sayash Vastu`, message, 'Daily Summary', 'https://sayash-vastu-portal.vercel.app', 'View Dashboard →');
     showToast(`✅ ${period} summary sent!`, 'ok');
   } catch (err) { showToast('❌ Email failed!', 'err'); }
 }
@@ -1339,9 +1339,11 @@ function showApp() {
     });
     document.getElementById('ceo-section').style.display = 'block';
     document.getElementById('ceo-notice-form').style.display = 'block';
-    // CEO ko My Tasks nahi chahiye
+    // CEO ko My Tasks, Attendance, Leave nahi chahiye
     document.getElementById('nav-tasks').style.display = 'none';
     document.getElementById('nav-assign').style.display = 'none';
+    document.getElementById('nav-attendance').style.display = 'none';
+    document.getElementById('nav-leaves').style.display = 'none';
   } else {
     ['nav-all-tasks','nav-employees','nav-att-report','nav-leave-approve'].forEach(id => {
       document.getElementById(id).style.display = 'none';
@@ -1439,6 +1441,20 @@ async function loadHome() {
     document.getElementById('nb-leave-approve').textContent = pendingLeaves || 0;
     if (pendingLeaves > 0) document.getElementById('nb-leave-approve').style.display = 'inline-block';
 
+    // Get today attendance
+    const todayDate = new Date().toISOString().split('T')[0];
+    const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', todayDate);
+    const presentToday = (todayAtt||[]).filter(a=>a.status==='Present'||a.status==='Half Day').length;
+    const absentToday = (totalEmp||0) - presentToday - (pendingLeaves||0);
+
+    // Get delayed tasks
+    const { data: allTasks } = await sb.from('tasks').select('*');
+    const today2 = new Date(); today2.setHours(0,0,0,0);
+    const delayedTasks = (allTasks||[]).filter(t=>{
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      return tat && today2 > tat && t.work_status !== 'Completed';
+    });
+
     document.getElementById('ceoDashStats').innerHTML = `
       <div class="ceo-stats-row">
         <div class="ceo-stat" style="cursor:pointer" onclick="showView('employees')">
@@ -1460,6 +1476,23 @@ async function loadHome() {
           <div class="ceo-stat-icon">✅</div>
           <div class="ceo-stat-num">${doneTasks||0}</div>
           <div class="ceo-stat-lbl">Tasks Completed</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+        <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--green)">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Today Present</div>
+          <div style="font-size:28px;font-weight:800;color:var(--green)">${presentToday}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">out of ${totalEmp||0} employees</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--red)">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Delayed Tasks</div>
+          <div style="font-size:28px;font-weight:800;color:var(--red)">${delayedTasks.length}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${delayedTasks.map(t=>t.assigned_to_name).filter((v,i,a)=>a.indexOf(v)===i).join(', ')||'None'}</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--blue)">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">In Progress</div>
+          <div style="font-size:28px;font-weight:800;color:var(--blue)">${(allTasks||[]).filter(t=>t.work_status==='In Progress').length}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">tasks running</div>
         </div>
       </div>
     `;
@@ -2016,7 +2049,7 @@ async function renderAllTasks() {
 //  EMPLOYEES CEO
 // ═══════════════════════════════════════════
 async function loadEmployees() {
-  const { data } = await sb.from('employees').select('*').order('created_at',{ascending:false});
+  const { data } = await sb.from('employees').select('*').eq('is_active',true).order('created_at',{ascending:false});
   const tbody=document.getElementById('employeesBody');
   if (!data||!data.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No employees</td></tr>'; return; }
   tbody.innerHTML=data.map(e=>`<tr>
