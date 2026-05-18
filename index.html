@@ -899,7 +899,7 @@ tbody tr:hover{background:#fafbff}
           </div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>#</th><th>Project</th><th>Task</th><th>Assigned To</th><th>TAT Date</th><th>Status</th><th>CEO Approval</th><th>Files</th></tr></thead>
+              <thead><tr><th>#</th><th>Project</th><th>Task</th><th>Assigned To</th><th>TAT Date</th><th>Status</th><th>CEO Approval</th><th>Files</th><th>Action</th></tr></thead>
               <tbody id="allTasksBody"></tbody>
             </table>
           </div>
@@ -1012,7 +1012,7 @@ const EJS_PUBLIC_KEY  = 'UJnNfp5bX02L9vf6e';
 const EJS_SERVICE_ID  = 'service_tntf75k';
 const EJS_TEMPLATE_ID = 'template_7164mdh';
 const CEO_EMAIL       = 'sayashinternal@gmail.com';
-const APPS_SCRIPT_URL = 'https://https://script.google.com/macros/s/AKfycby2tlvIUEx7FfL7cp9bypDml7Xn8ecJVotVJnHavNhXcfqPMR-EY4Z69feQs_Kl64WV/exec/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVaC0hQXJLb-HN02Tb6nhTNTReFfs6cF4YwJQN8uNBVoao-mh15W_FLMg8anDOp8I_/exec';
 emailjs.init(EJS_PUBLIC_KEY);
 
 const STORAGE_BUCKET = 'task-files';
@@ -1559,7 +1559,7 @@ async function renderMyTasks() {
   const filtered = myTasksFilter==='all' ? myTasks : myTasks.filter(t=>t.work_status===myTasksFilter);
   const tbody = document.getElementById('myTasksBody');
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">No tasks found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">No tasks found</td></tr>';
     return;
   }
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1582,7 +1582,10 @@ async function renderMyTasks() {
       <td>${statusBadge(t.work_status)}</td>
       <td>${ceoBadge(t.ceo_approval)}</td>
       <td style="min-width:100px">${files.length ? renderFileChips(files) : '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="openTaskModal('${t.id}')">Update</button></td>
+      <td style="display:flex;gap:5px">
+        <button class="btn btn-primary btn-sm" onclick="openTaskModal('${t.id}')">Update</button>
+        <button class="btn btn-sm" onclick="deleteTask('${t.id}')" style="background:#fdf0ee;color:var(--red);border-color:var(--red-bg)">🗑️</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1745,7 +1748,7 @@ async function assignTask() {
   showToast('✅ Task assigned to '+name, 'ok');
   await sendEmail(
     email, name,
-    'New Task Assigned — Sayash Vastu',
+    '📋 New Task Assigned — Sayash Vastu',
     `You have been assigned a new task.
 
 Project: ${project}
@@ -1996,6 +1999,7 @@ async function renderAllTasks() {
       <td>${statusBadge(t.work_status)}</td>
       <td>${ceoBadge(t.ceo_approval)}</td>
       <td>${files.length?renderFileChips(files):'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+      <td><button class="btn btn-sm" onclick="deleteTask('${t.id}',true)" style="background:#fdf0ee;color:var(--red);border-color:var(--red-bg)">🗑️ Delete</button></td>
     </tr>`;
   }).join('');
 }
@@ -2142,6 +2146,17 @@ async function approveLeave(id, status) {
     );
   }
   loadLeaveApprovals();
+}
+
+// ═══════════════════════════════════════════
+//  DELETE TASK
+// ═══════════════════════════════════════════
+async function deleteTask(taskId, reload=false) {
+  if (!confirm('Are you sure you want to delete this task? This cannot be undone.')) return;
+  const { error } = await sb.from('tasks').delete().eq('id', taskId);
+  if (error) { showToast('❌ Delete failed: ' + error.message, 'err'); return; }
+  showToast('✅ Task deleted!', 'ok');
+  if (reload) { loadAllTasks(); } else { loadMyTasks(); }
 }
 
 // ═══════════════════════════════════════════
