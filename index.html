@@ -1675,8 +1675,18 @@ async function loadCeoActivityFeed() {
         </div>`:'<div style="font-size:12px;color:var(--green);font-weight:600">✅ All tasks completed!</div>'}
 
         <div style="text-align:right">
+          ${urgentTask && urgentTask.work_status==='Senior Approved' ? `
+          <div style="font-size:9px;color:var(--muted);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">CEO Finalize</div>
+          <select onchange="ceoFinalizeTask('${urgentTask.id}',this.value)" 
+            style="padding:5px 10px;border:1.5px solid var(--gold);border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--navy);background:#fdf6e3;font-weight:600">
+            <option value="">— Select —</option>
+            <option>Finalize with SG</option>
+            <option>Finalize with YG</option>
+          </select>
+          ` : `
           <div style="font-size:11px;font-weight:600;color:${pendingColor}">${pendingWith}</div>
           <div style="font-size:9px;color:var(--muted);margin-top:2px">Pending with</div>
+          `}
         </div>
       </div>
     </div>`;
