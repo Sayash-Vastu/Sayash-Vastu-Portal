@@ -596,6 +596,9 @@ tbody tr:hover{background:#fafbff}
       <button class="nav-btn" onclick="showView('tasks')" id="nav-tasks">
         <span class="ni">📋</span><span>My Tasks</span><span class="nav-badge" id="nb-tasks">0</span>
       </button>
+      <button class="nav-btn" id="nav-senior-review" onclick="showView('seniorReview')" style="display:none">
+        <span class="ni">🔍</span><span>Senior Review</span><span class="nav-badge" id="nb-senior">0</span>
+      </button>
       <button class="nav-btn" id="nav-assign" onclick="showView('assign')" style="display:none">
         <span class="ni">➕</span><span>Assign Task</span>
       </button>
@@ -946,6 +949,15 @@ tbody tr:hover{background:#fafbff}
             </table>
           </div>
         </div>
+      </div>
+
+      <!-- SENIOR REVIEW VIEW -->
+      <div class="view" id="view-seniorReview">
+        <div class="page-header">
+          <h2>Senior Review</h2>
+          <p>Tasks waiting for your approval before CEO review</p>
+        </div>
+        <div id="seniorReviewList"></div>
       </div>
 
       <!-- LEAVE APPROVALS CEO -->
@@ -1351,6 +1363,12 @@ function showApp() {
     document.getElementById('ceo-section').style.display = 'none';
     document.getElementById('ceo-notice-form').style.display = 'none';
     document.getElementById('nav-tasks').style.display = 'flex';
+    // Senior Review - Alisha ya koi bhi senior designation wala
+    const seniorDesignations = ['Senior Vastu Research Analyst','Senior Designer','Project Head','Manager'];
+    if (seniorDesignations.includes(currentUser.designation)) {
+      document.getElementById('nav-senior-review').style.display = 'flex';
+      loadSeniorBadge();
+    }
   }
 
   if (currentUser.role === 'employee') {
@@ -1390,6 +1408,7 @@ const viewTitles = {
   employees: ['Employees','Manage company employees'],
   attReport: ['Attendance Report','Monthly attendance overview'],
   leaveApprove: ['Leave Approvals','Approve or reject leave requests'],
+  seniorReview: ['Senior Review','Approve tasks before CEO review'],
 };
 
 function showView(name) {
@@ -1416,6 +1435,7 @@ function showView(name) {
     loadAttReport();
   }
   if (name === 'leaveApprove') loadLeaveApprovals();
+  if (name === 'seniorReview') loadSeniorReview();
 }
 
 // ═══════════════════════════════════════════
@@ -1637,17 +1657,15 @@ function openTaskModal(taskId) {
     ${locked ? '<div class="badge b-green" style="margin-bottom:12px">✅ Task Completed — locked</div>' : `
     <div class="field" style="margin-bottom:14px">
       <label>Update Status</label>
-      <select id="modal-status">
-        ${['Not Started','In Progress','Sent for Review','Completed'].map(s=>`<option ${s===t.work_status?'selected':''}>${s}</option>`).join('')}
+      <select id="modal-status" onchange="handleStatusChange(this.value)">
+        ${['Not Started','In Progress','Completed','Sent to Senior'].map(s=>`<option ${s===t.work_status?'selected':''}>${s}</option>`).join('')}
       </select>
     </div>
-    <div class="field" id="ceo-approval-field" style="margin-bottom:14px;display:${t.work_status==='Completed'?'block':'none'}">
-      <label>CEO Approval</label>
-      <select id="modal-ceo">
-        <option value="">— Select —</option>
-        <option ${t.ceo_approval==='Finalize with SG'?'selected':''}>Finalize with SG</option>
-        <option ${t.ceo_approval==='Finalize with YG'?'selected':''}>Finalize with YG</option>
-      </select>
+    <div id="senior-info" style="margin-bottom:14px;display:${t.work_status==='Sent to Senior'||t.work_status==='Senior Approved'?'block':'none'}">
+      <div style="background:#f0ebff;border-radius:8px;padding:10px 12px;font-size:12px;color:#6d28d9">
+        <strong>Senior Review:</strong> ${t.senior_approval||'Pending'} 
+        ${t.senior_approved_by?'by '+t.senior_approved_by:''}
+      </div>
     </div>
     `}
     <div class="field" style="margin-bottom:14px">
@@ -1724,6 +1742,7 @@ async function saveTaskUpdate() {
 
   const updates = { work_status: status, comments, updated_at: new Date().toISOString() };
   if (status === 'Completed' && ceoVal) updates.ceo_approval = ceoVal;
+  if (status === 'Sent to Senior') { updates.senior_approval = 'Pending'; updates.senior_approved_by = ''; }
   const { error } = await sb.from('tasks').update(updates).eq('id', currentTaskRow.id);
   if (error) { msgEl.textContent = '❌ ' + error.message; msgEl.style.color = 'var(--red)'; return; }
 
@@ -2031,7 +2050,14 @@ async function renderAllTasks() {
       <td style="font-size:12px">${esc(t.assigned_to_name)}</td>
       <td style="font-size:11px;font-weight:700;color:${isLate?'var(--red)':'var(--muted)'}">${fmtDate(t.tat_date)}</td>
       <td>${statusBadge(t.work_status)}</td>
-      <td>${ceoBadge(t.ceo_approval)}</td>
+      <td>
+        ${t.work_status==='Senior Approved'?`
+        <select onchange="ceoFinalizeTask('${t.id}',this.value)" style="padding:4px 8px;border:1.5px solid var(--gold);border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--navy)">
+          <option value="">— Finalize —</option>
+          <option>Finalize with SG</option>
+          <option>Finalize with YG</option>
+        </select>`:ceoBadge(t.ceo_approval)}
+      </td>
       <td>${files.length?renderFileChips(files):'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
       <td><button class="btn btn-sm" onclick="deleteTask('${t.id}',true)" style="background:#fdf0ee;color:var(--red);border-color:var(--red-bg)">🗑️ Delete</button></td>
     </tr>`;
@@ -2227,8 +2253,95 @@ async function deleteLeaveRecord(leaveId) {
 }
 
 // ═══════════════════════════════════════════
+//  SENIOR REVIEW
+// ═══════════════════════════════════════════
+async function loadSeniorBadge() {
+  const { data } = await sb.from('tasks').select('id').eq('work_status','Sent to Senior').eq('senior_approval','Pending');
+  const count = (data||[]).length;
+  const badge = document.getElementById('nb-senior');
+  if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline-block' : 'none'; }
+}
+
+async function loadSeniorReview() {
+  const { data } = await sb.from('tasks').select('*').eq('work_status','Sent to Senior').order('created_at',{ascending:false});
+  const el = document.getElementById('seniorReviewList');
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">No pending reviews</div><p>All tasks reviewed!</p></div>';
+    return;
+  }
+  el.innerHTML = data.map(t => `
+    <div class="leave-action-card" style="margin-bottom:12px">
+      <div class="leave-action-head">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="background:#e8ecf5;color:var(--navy);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${esc(t.project)}</span>
+            ${statusBadge(t.work_status)}
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy)">${esc(t.task_detail)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">
+            👤 Assigned to: ${esc(t.assigned_to_name)} · TAT: ${fmtDate(t.tat_date)}
+          </div>
+          ${t.comments ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;padding:8px;background:#f8f9fc;border-radius:6px">💬 ${esc(t.comments)}</div>` : ''}
+        </div>
+        <div>${t.senior_approval==='Approved'?'<span class="badge b-green">✓ Approved</span>':'<span class="badge b-amber">Pending Review</span>'}</div>
+      </div>
+      ${t.senior_approval!=='Approved'?`
+      <div class="leave-action-actions">
+        <button class="btn btn-green btn-sm" onclick="approveSeniorTask('${t.id}')">✅ Approve — Send to CEO</button>
+        <button class="btn btn-red btn-sm" onclick="rejectSeniorTask('${t.id}')">↩️ Send Back</button>
+      </div>`:''}
+    </div>
+  `).join('');
+}
+
+async function approveSeniorTask(taskId) {
+  const { error } = await sb.from('tasks').update({
+    senior_approval: 'Approved',
+    senior_approved_by: currentUser.name,
+    work_status: 'Senior Approved',
+    updated_at: new Date().toISOString()
+  }).eq('id', taskId);
+  if (error) { showToast('❌ '+error.message,'err'); return; }
+  showToast('✅ Approved! Sent to CEO.','ok');
+  loadSeniorReview();
+  loadSeniorBadge();
+}
+
+async function rejectSeniorTask(taskId) {
+  const reason = prompt('Reason for sending back:');
+  if (reason === null) return;
+  const { error } = await sb.from('tasks').update({
+    work_status: 'In Progress',
+    senior_approval: 'Pending',
+    comments: (reason ? 'Senior feedback: ' + reason : ''),
+    updated_at: new Date().toISOString()
+  }).eq('id', taskId);
+  if (error) { showToast('❌ '+error.message,'err'); return; }
+  showToast('↩️ Task sent back to employee','ok');
+  loadSeniorReview();
+}
+
+function handleStatusChange(val) {
+  const seniorInfo = document.getElementById('senior-info');
+  if (seniorInfo) seniorInfo.style.display = val==='Sent to Senior'||val==='Senior Approved'?'block':'none';
+}
+
+// ═══════════════════════════════════════════
 //  DELETE TASK
 // ═══════════════════════════════════════════
+async function ceoFinalizeTask(taskId, decision) {
+  if (!decision) return;
+  const { error } = await sb.from('tasks').update({
+    ceo_approval: decision,
+    work_status: 'Report Ready',
+    report_status: 'Ready',
+    updated_at: new Date().toISOString()
+  }).eq('id', taskId);
+  if (error) { showToast('❌ '+error.message,'err'); return; }
+  showToast('✅ '+decision+' — Report Ready!','ok');
+  loadAllTasks();
+}
+
 async function deleteTask(taskId, reload=false) {
   if (!confirm('Are you sure you want to delete this task? This cannot be undone.')) return;
   const { error } = await sb.from('tasks').delete().eq('id', taskId);
@@ -2250,13 +2363,22 @@ function fmtDate(d) {
 }
 
 function statusBadge(s) {
-  const map={'Not Started':'b-gray','In Progress':'b-blue','Sent for Review':'b-amber','Completed':'b-green'};
+  const map={
+    'Not Started':'b-gray',
+    'In Progress':'b-blue',
+    'Sent for Review':'b-amber',
+    'Completed':'b-green',
+    'Sent to Senior':'b-purple',
+    'Senior Approved':'b-blue',
+    'Report Ready':'b-green'
+  };
   return `<span class="badge ${map[s]||'b-gray'}">${esc(s)}</span>`;
 }
 
 function ceoBadge(v) {
-  if (v==='Finalize with SG') return '<span class="badge b-green">✓ SG</span>';
-  if (v==='Finalize with YG') return '<span class="badge b-green">✓ YG</span>';
+  if (v==='Finalize with SG') return '<span class="badge b-green">✓ Finalized SG</span>';
+  if (v==='Finalize with YG') return '<span class="badge b-green">✓ Finalized YG</span>';
+  if (v==='Report Ready') return '<span class="badge b-green">📄 Report Ready</span>';
   return '<span class="badge b-amber">Pending</span>';
 }
 
