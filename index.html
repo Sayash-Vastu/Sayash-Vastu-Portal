@@ -1011,8 +1011,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const EJS_PUBLIC_KEY  = 'UJnNfp5bX02L9vf6e';
 const EJS_SERVICE_ID  = 'service_tntf75k';
 const EJS_TEMPLATE_ID = 'template_7164mdh';
-const CEO_EMAIL       = 'sayashinternal@gmail.com';
-emailjs.init(EJS_PUBLIC_KEY);
+const CEO_EMAIL = 'sayashinternal@gmail.com';
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVaC0hQXJLb-HN02Tb6nhTNTReFfs6cF4YwJQN8uNBVoao-mh15W_FLMg8anDOp8I_/exec';
 
 const STORAGE_BUCKET = 'task-files';
 
@@ -1086,13 +1087,26 @@ function updateDateHeader() {
 // ═══════════════════════════════════════════
 //  EMAIL
 // ═══════════════════════════════════════════
-async function sendEmail(toEmail, toName, title, message) {
+async function sendEmail(toEmail, toName, subject, message, type = 'General', actionUrl = '', actionLabel = '') {
   try {
-    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
-      to_email: toEmail, to_name: toName,
-      name: 'Sayash Vastu Portal', title, message, email: CEO_EMAIL
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to_email: toEmail,
+        to_name: toName,
+        subject: subject,
+        message: message,
+        type: type,
+        action_url: actionUrl,
+        action_label: actionLabel
+      })
     });
-  } catch (err) { console.error('Email error:', err); }
+    console.log('Email sent to', toEmail);
+  } catch(err) {
+    console.error('Email error:', err);
+  }
 }
 
 async function sendDailySummaryEmail(period) {
@@ -1729,13 +1743,14 @@ async function assignTask() {
   if (error) { msg.textContent='❌ '+error.message; msg.style.color='var(--red)'; return; }
   msg.textContent='✅ Task assigned!'; msg.style.color='var(--green)';
   showToast('✅ Task assigned to '+name, 'ok');
-  ['at-project','at-detail','at-end','at-tat'].forEach(id => document.getElementById(id).value='');
-  if (currentUser.role!=='employee') {
-    document.getElementById('at-name').value='';
-    document.getElementById('at-email').value='';
-  }
-  setTimeout(()=>msg.textContent='',4000);
-}
+  await sendEmail(
+  email, name,
+  '📋 New Task Assigned — Sayash Vastu',
+  `You have been assigned a new task.\n\nProject: ${project}\nTask: ${detail}\nStart Date: ${start}\nEnd Date: ${end}\nTAT Date: ${tat}\n\nPlease login to view your task details.`,
+  'Task Assigned',
+  'https://sayash-vastu-portal.vercel.app',
+  'View My Tasks →'
+);
 
 // ═══════════════════════════════════════════
 //  ATTENDANCE
