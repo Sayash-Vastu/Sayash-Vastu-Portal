@@ -1456,43 +1456,36 @@ async function loadHome() {
     });
 
     document.getElementById('ceoDashStats').innerHTML = `
-      <div class="ceo-stats-row">
-        <div class="ceo-stat" style="cursor:pointer" onclick="showView('employees')">
-          <div class="ceo-stat-icon">👥</div>
-          <div class="ceo-stat-num">${totalEmp||0}</div>
-          <div class="ceo-stat-lbl">Total Employees</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px">
+        <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer;position:relative;overflow:hidden" onclick="showView('employees')">
+          <div style="font-size:16px;margin-bottom:6px">👥</div>
+          <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${totalEmp||0}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Employees</div>
         </div>
-        <div class="ceo-stat" style="cursor:pointer" onclick="showView('allTasks')">
-          <div class="ceo-stat-icon">📋</div>
-          <div class="ceo-stat-num">${totalTasks||0}</div>
-          <div class="ceo-stat-lbl">Total Tasks</div>
+        <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer;position:relative;overflow:hidden" onclick="showView('allTasks')">
+          <div style="font-size:16px;margin-bottom:6px">📋</div>
+          <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${totalTasks||0}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Total Tasks</div>
         </div>
-        <div class="ceo-stat" style="cursor:pointer;border-top:2px solid var(--gold)" onclick="showView('leaveApprove')">
-          <div class="ceo-stat-icon">⏳</div>
-          <div class="ceo-stat-num" style="color:var(--gold)">${pendingLeaves||0}</div>
-          <div class="ceo-stat-lbl">Pending Leaves</div>
+        <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="showView('allTasks')">
+          <div style="font-size:16px;margin-bottom:6px">✅</div>
+          <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${doneTasks||0}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Completed</div>
         </div>
-        <div class="ceo-stat" style="cursor:pointer" onclick="showView('allTasks')">
-          <div class="ceo-stat-icon">✅</div>
-          <div class="ceo-stat-num">${doneTasks||0}</div>
-          <div class="ceo-stat-lbl">Tasks Completed</div>
+        <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--green);cursor:pointer">
+          <div style="font-size:16px;margin-bottom:6px">🟢</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green);line-height:1">${presentToday}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Present Today</div>
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
-        <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--green)">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Today Present</div>
-          <div style="font-size:28px;font-weight:800;color:var(--green)">${presentToday}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">out of ${totalEmp||0} employees</div>
+        <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--red);cursor:pointer" onclick="showView('allTasks')">
+          <div style="font-size:16px;margin-bottom:6px">⚠️</div>
+          <div style="font-size:22px;font-weight:800;color:var(--red);line-height:1">${delayedTasks.length}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Delayed</div>
         </div>
-        <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--red)">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Delayed Tasks</div>
-          <div style="font-size:28px;font-weight:800;color:var(--red)">${delayedTasks.length}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">${delayedTasks.map(t=>t.assigned_to_name).filter((v,i,a)=>a.indexOf(v)===i).join(', ')||'None'}</div>
-        </div>
-        <div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--blue)">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">In Progress</div>
-          <div style="font-size:28px;font-weight:800;color:var(--blue)">${(allTasks||[]).filter(t=>t.work_status==='In Progress').length}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">tasks running</div>
+        <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--blue);cursor:pointer" onclick="showView('leaveApprove')">
+          <div style="font-size:16px;margin-bottom:6px">⏳</div>
+          <div style="font-size:22px;font-weight:800;color:var(--amber);line-height:1">${pendingLeaves||0}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Leave Pending</div>
         </div>
       </div>
     `;
