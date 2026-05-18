@@ -1084,12 +1084,19 @@ window.onload = function() {
 
   document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
-  // Auto summary emails
+  // Auto summary emails + birthday check
   setInterval(function() {
-    if (!currentUser || (currentUser.role !== 'ceo' && currentUser.role !== 'manager')) return;
+    if (!currentUser) return;
     const now = new Date();
     const hr = now.getHours(); const min = now.getMinutes();
     const today = now.toDateString();
+    
+    // Morning birthday wish at 9am
+    if (hr === 9 && min < 5 && localStorage.getItem('sv_bday_sent_' + today) === null) {
+      loadBirthdaySection();
+    }
+
+    if (!currentUser || (currentUser.role !== 'ceo' && currentUser.role !== 'manager')) return;
     if (hr === 8 && min < 5 && localStorage.getItem('sv_last_morning') !== today) {
       localStorage.setItem('sv_last_morning', today);
       sendDailySummaryEmail('Morning');
@@ -1574,13 +1581,29 @@ async function loadHome() {
     }).join('') + '</div>';
   }
 
-  // Notices
+  // Notices + Birthday
   const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
   const noticesEl = document.getElementById('homeNotices');
+  
+  // Check birthdays for notices panel
+  const bdayList = await checkBirthdays();
+  let bdayHTML = '';
+  if (bdayList && bdayList.length) {
+    bdayHTML = bdayList.map(e => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge" style="background:#fdf6e3;color:#92680a;font-size:10px">🎂 Birthday</span>
+          <span style="font-size:13px;font-weight:600;color:var(--navy)">${esc(e.name)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">🎉 Wishing a wonderful birthday!</div>
+      </div>
+    `).join('');
+  }
+
   if (!notices || !notices.length) {
-    noticesEl.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No notices yet</p>';
+    noticesEl.innerHTML = bdayHTML || '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No notices yet</p>';
   } else {
-    noticesEl.innerHTML = notices.map(n => `
+    noticesEl.innerHTML = bdayHTML + notices.map(n => `
       <div style="padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:6px">
           <span class="badge ${n.priority==='Urgent'?'b-red':n.priority==='High'?'b-gold':'b-blue'}" style="font-size:10px">${n.priority}</span>
@@ -2452,42 +2475,66 @@ async function loadBirthdaySection() {
   const bdays = await checkBirthdays();
   if (!bdays || !bdays.length) return;
   
-  // Show on dashboard
+  // Show birthday banner for ALL users
   const bdayEl = document.getElementById('birthdayBanner');
   if (bdayEl) {
     bdayEl.style.display = 'block';
     bdayEl.innerHTML = bdays.map(e => `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,#fdf6e3,#fff8e7);border-radius:10px;border:1px solid #f0c96a;margin-bottom:8px">
-        <span style="font-size:24px">🎂</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--navy)">Happy Birthday, ${esc(e.name)}! 🎉</div>
-          <div style="font-size:11px;color:var(--muted)">Wishing a wonderful day!</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(135deg,#fdf6e3,#fff8e7);border-radius:12px;border:1px solid #f0c96a;margin-bottom:8px;box-shadow:0 2px 8px rgba(201,168,76,0.15)">
+        <span style="font-size:32px">🎂</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--navy)">Happy Birthday, ${esc(e.name)}! 🎉</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Wishing you a wonderful day from the entire Sayash Vastu family!</div>
         </div>
+        <div style="font-size:24px">🎊</div>
       </div>
     `).join('');
+  }
 
-    // Send birthday wish emails
-    const lastBday = localStorage.getItem('sv_bday_sent_' + new Date().toDateString());
-    if (!lastBday) {
-      for (const emp of bdays) {
-        await sendEmail(
-          emp.email, emp.name,
-          '🎂 Happy Birthday from Sayash Vastu!',
-          `Dear ${emp.name},
+  // Send birthday wish email - only once per day at morning
+  const bdayKey = 'sv_bday_sent_' + new Date().toDateString();
+  const alreadySent = localStorage.getItem(bdayKey);
+  if (!alreadySent) {
+    for (const emp of bdays) {
+      await sendEmail(
+        emp.email,
+        emp.name,
+        'Happy Birthday! - Sayash Vastu',
+        `Dear ${emp.name},
 
 Wishing you a very Happy Birthday! 🎉🎂
 
-May this special day bring you joy, happiness and success.
+May this special day bring you lots of joy, happiness and success.
+
+Your hard work and dedication inspire us all. Have a fantastic day!
 
 With warm wishes,
-Sayash Vastu Family`,
-          'Birthday',
+Sayash Vastu Family
+
+P.S. Your team is lucky to have you!`,
+        'Birthday',
+        'https://sayash-vastu-portal.vercel.app',
+        'Visit Portal →'
+      );
+      // Also notify CEO
+      if (emp.email !== CEO_EMAIL) {
+        await sendEmail(
+          CEO_EMAIL,
+          'CEO Admin',
+          'Birthday Reminder - ' + emp.name,
+          `Today is ${emp.name}'s birthday!
+
+Don't forget to wish them! A birthday wish from the CEO means a lot to the team.
+
+Employee: ${emp.name}
+Designation: ${emp.designation||'—'}`,
+          'Birthday Reminder',
           'https://sayash-vastu-portal.vercel.app',
-          'Visit Portal →'
+          'View Portal →'
         );
       }
-      localStorage.setItem('sv_bday_sent_' + new Date().toDateString(), 'true');
     }
+    localStorage.setItem(bdayKey, 'true');
   }
 }
 
