@@ -1297,6 +1297,47 @@ tbody tr:hover{background:#fafbff}
   </div>
 </div>
 
+<!-- EDIT EMPLOYEE MODAL -->
+<div class="modal-overlay" id="editEmpModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">✏️ Edit Employee</div>
+    <div style="margin-bottom:16px;padding:10px 14px;background:#f8f9fc;border-radius:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--navy)" id="editEmpModalName">—</div>
+    </div>
+    <div class="form-grid cols-2">
+      <div class="field">
+        <label>Employee Code</label>
+        <input type="text" id="edit-code" placeholder="EMP001"/>
+      </div>
+      <div class="field">
+        <label>Department</label>
+        <input type="text" id="edit-dept" placeholder="Design"/>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Designation</label>
+        <input type="text" id="edit-desig" placeholder="Senior Designer"/>
+      </div>
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" id="edit-joining"/>
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="edit-role">
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+          <option value="ceo">CEO</option>
+        </select>
+      </div>
+    </div>
+    <div id="editEmpMsg" style="font-size:12px;font-weight:600;margin-top:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('editEmpModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditEmp()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- PASSWORD CHANGE MODAL -->
 <div class="modal-overlay" id="passModal">
   <div class="modal" style="width:400px">
@@ -2681,6 +2722,7 @@ async function loadEmployees() {
         <span class="badge ${e.is_active?'b-green':'b-red'}">${e.is_active?'Active':'Inactive'}</span>
         ${e.role!=='ceo'?`<button class="btn btn-sm" onclick="toggleEmployee('${e.id}',${e.is_active})" style="padding:3px 8px;font-size:10px;background:${e.is_active?'#fdf0ee':'#e6f5ee'};color:${e.is_active?'var(--red)':'var(--green)'};border-color:${e.is_active?'var(--red-bg)':'var(--green-bg)'}">${e.is_active?'Deactivate':'Activate'}</button>`:''}
         ${currentUser && (currentUser.role==='ceo'||currentUser.role==='manager')?`
+          <button class="btn btn-sm" onclick="openEditEmpModal('${e.id}','${esc(e.name)}','${esc(e.employee_code)}','${esc(e.department||'')}','${esc(e.designation||'')}','${e.joining_date||''}','${e.role}')" style="padding:3px 8px;font-size:10px;background:#e6f5ee;color:var(--green);border-color:#b8e0c8">✏️ Edit</button>
           <button class="btn btn-sm" onclick="openPassModal('${e.id}','${esc(e.name)}','${esc(e.email)}')" style="padding:3px 8px;font-size:10px;background:#eef2fb;color:var(--blue);border-color:#c0d0f0">🔑 Pass</button>
           <button class="btn btn-sm" onclick="openPhotoModal('${e.id}','${esc(e.name)}','${esc(e.email)}')" style="padding:3px 8px;font-size:10px;background:#f0ebff;color:var(--purple);border-color:#d4c5f9">📷 Photo</button>
         `:''}
@@ -2898,6 +2940,42 @@ async function saveEmpPhoto() {
     sessionStorage.setItem('sv_user', JSON.stringify(currentUser));
     loadEmpDashboard();
   }
+}
+
+// Edit Employee
+let currentEditEmpId = null;
+function openEditEmpModal(empId, empName, empCode, empDept, empDesig, empJoining, empRole) {
+  currentEditEmpId = empId;
+  document.getElementById('editEmpModalName').textContent = empName;
+  document.getElementById('edit-code').value = empCode || '';
+  document.getElementById('edit-dept').value = empDept || '';
+  document.getElementById('edit-desig').value = empDesig || '';
+  document.getElementById('edit-joining').value = empJoining || '';
+  document.getElementById('edit-role').value = empRole || 'employee';
+  document.getElementById('editEmpMsg').textContent = '';
+  document.getElementById('editEmpModal').classList.add('open');
+}
+
+async function saveEditEmp() {
+  const code = document.getElementById('edit-code').value.trim();
+  const dept = document.getElementById('edit-dept').value.trim();
+  const desig = document.getElementById('edit-desig').value.trim();
+  const joining = document.getElementById('edit-joining').value;
+  const role = document.getElementById('edit-role').value;
+  const msgEl = document.getElementById('editEmpMsg');
+
+  const { error } = await sb.from('employees').update({
+    employee_code: code,
+    department: dept,
+    designation: desig,
+    joining_date: joining || null,
+    role: role
+  }).eq('id', currentEditEmpId);
+
+  if (error) { msgEl.textContent = '❌ '+error.message; msgEl.style.color = 'var(--red)'; return; }
+  showToast('✅ Employee updated!', 'ok');
+  closeModal('editEmpModal');
+  loadEmployees();
 }
 
 // Password change
