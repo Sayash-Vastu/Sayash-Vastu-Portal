@@ -654,40 +654,152 @@ tbody tr:hover{background:#fafbff}
 
       <!-- HOME VIEW -->
       <div class="view active" id="view-home">
-        <div class="page-header">
-          <h2 id="homeGreeting">Good Morning! 👋</h2>
-          <p id="homeSubtitle">Here's your overview for today</p>
-        </div>
         <div id="birthdayBanner" style="display:none;margin-bottom:16px"></div>
         <div id="ceoDashStats"></div>
-        <div class="stat-grid" id="homeStats"></div>
-        <div id="ceoActivitySection" style="display:none;margin-bottom:20px">
-          <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">👁️ Live Company Activity</div>
-              <button class="btn btn-outline btn-sm" onclick="showView('allTasks')">All Tasks →</button>
+
+        <!-- EMPLOYEE DASHBOARD -->
+        <div id="empDashboard" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:16px">
+            <!-- Welcome + Login/Logout -->
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-body">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+                  <div>
+                    <div style="font-size:20px;font-weight:700;color:var(--navy)" id="empGreeting">Good Morning!</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:3px" id="empDateSub">—</div>
+                    <div style="font-size:13px;color:var(--muted);margin-top:6px" id="empLoginStatus">Not logged in today</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+                    <div style="font-size:32px;font-weight:800;color:var(--navy);font-family:'DM Serif Display',serif" id="empClock">--:--</div>
+                    <button class="btn btn-gold" id="empLoginBtn" onclick="markEmpLogin()" style="display:none;padding:10px 24px;font-size:14px">🔐 Log In</button>
+                    <button class="btn btn-red" id="empLogoutBtn" onclick="markEmpLogout()" style="display:none;padding:10px 24px;font-size:14px">🚪 Log Out</button>
+                    <div id="empLoginDone" style="display:none;font-size:12px;color:var(--green);font-weight:600">✅ Attendance complete!</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div id="ceoActivityFeed" style="padding:0"></div>
+            <!-- Profile Card -->
+            <div class="panel" style="margin-bottom:0;background:linear-gradient(135deg,var(--navy),var(--navy2));overflow:hidden">
+              <div class="panel-body">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                  <div style="width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--gold)">
+                    <div id="empPhotoAv" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--navy)">SV</div>
+                  </div>
+                  <div>
+                    <div style="font-size:14px;font-weight:700;color:#fff" id="empProfileName">—</div>
+                    <div style="font-size:11px;color:var(--gold);margin-top:2px" id="empProfileDesig">—</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px" id="empProfileCode">—</div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:10px;text-align:center">
+                    <div style="font-size:20px;font-weight:800;color:#fff" id="empOpenTasks">0</div>
+                    <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Open Tasks</div>
+                  </div>
+                  <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:10px;text-align:center">
+                    <div style="font-size:20px;font-weight:800;color:var(--gold)" id="empHrsWorked">0h</div>
+                    <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Today Hours</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Grid -->
+          <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+            <div>
+              <!-- My Tasks Table -->
+              <div class="panel">
+                <div class="panel-head">
+                  <div class="panel-title">📋 My Tasks</div>
+                  <button class="btn btn-outline btn-sm" onclick="showView('tasks')">View All →</button>
+                </div>
+                <div class="tbl-wrap">
+                  <table>
+                    <thead><tr><th>#</th><th>Project</th><th>Task</th><th>Status</th><th>Due Date</th></tr></thead>
+                    <tbody id="empTaskTable"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- On Leave Today -->
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title">🏖️ On Leave Today</div></div>
+                <div id="empLeaveToday" style="padding:12px 16px">
+                  <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No one on leave today</div>
+                </div>
+              </div>
+
+              <!-- Work Anniversary -->
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title">🎊 Work Anniversary & Joinings</div></div>
+                <div id="empAnniversary" style="padding:12px 16px">
+                  <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No records today</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <!-- Birthdays -->
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title">🎂 Upcoming Birthdays</div></div>
+                <div id="empBirthdays" style="padding:8px 16px">
+                  <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No birthdays this month</div>
+                </div>
+              </div>
+
+              <!-- Notices -->
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title">📢 Notices</div></div>
+                <div id="homeNotices" style="padding:12px 16px"></div>
+              </div>
+
+              <!-- Today Log -->
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title">⏰ Today's Log</div></div>
+                <div id="homeAttendance" style="padding:16px"></div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="home-grid">
-          <div>
+
+        <!-- CEO DASHBOARD -->
+        <div id="ceoDashboard" style="display:none">
+          <div class="page-header">
+            <h2 id="homeGreeting">Good Afternoon! 👋</h2>
+            <p id="homeSubtitle">Here's your company overview</p>
+          </div>
+          <div class="stat-grid" id="homeStats"></div>
+          <div id="ceoActivitySection" style="display:none;margin-bottom:20px">
             <div class="panel">
               <div class="panel-head">
-                <div class="panel-title">📋 My Active Tasks</div>
-                <button class="btn btn-outline btn-sm" onclick="showView('tasks')">View All →</button>
+                <div class="panel-title">👁️ Live Company Activity</div>
+                <button class="btn btn-outline btn-sm" onclick="showView('allTasks')">All Tasks →</button>
               </div>
-              <div id="homeTaskList"><div class="empty-state"><div class="empty-icon">📭</div><p>No active tasks</p></div></div>
+              <div id="ceoActivityFeed" style="padding:0"></div>
             </div>
           </div>
-          <div>
-            <div class="panel">
-              <div class="panel-head"><div class="panel-title">📢 Latest Notices</div></div>
-              <div id="homeNotices" style="padding:12px 16px"></div>
+          <div class="home-grid">
+            <div>
+              <div class="panel">
+                <div class="panel-head">
+                  <div class="panel-title">📋 Recent Tasks</div>
+                  <button class="btn btn-outline btn-sm" onclick="showView('allTasks')">View All →</button>
+                </div>
+                <div id="homeTaskList"><div class="empty-state"><div class="empty-icon">📭</div><p>No active tasks</p></div></div>
+              </div>
             </div>
-            <div class="panel" style="margin-top:16px">
-              <div class="panel-head"><div class="panel-title">⏰ Today's Attendance</div></div>
-              <div id="homeAttendance" style="padding:16px"></div>
+            <div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title">📢 Latest Notices</div></div>
+                <div id="homeNotices" style="padding:12px 16px"></div>
+              </div>
+              <div class="panel" style="margin-top:16px">
+                <div class="panel-head"><div class="panel-title">🎂 Birthdays</div></div>
+                <div id="empBirthdays2" style="padding:12px 16px">
+                  <div style="text-align:center;color:var(--muted);font-size:13px;padding:10px">No birthdays today</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1121,6 +1233,12 @@ function updateClock() {
   const t = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const el = document.getElementById('attClock');
   if (el) el.textContent = t;
+  updateEmpClock();
+}
+
+function updateEmpClock() {
+  const el = document.getElementById('empClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
 }
 
 function updateDateHeader() {
@@ -1389,11 +1507,13 @@ function showApp() {
     });
     document.getElementById('ceo-section').style.display = 'block';
     document.getElementById('ceo-notice-form').style.display = 'block';
-    // CEO ko My Tasks, Attendance, Leave nahi chahiye
+    // CEO ko My Tasks, Attendance, Leave nahi chahiye sidebar mein
     document.getElementById('nav-tasks').style.display = 'none';
     document.getElementById('nav-assign').style.display = 'none';
     document.getElementById('nav-attendance').style.display = 'none';
     document.getElementById('nav-leaves').style.display = 'none';
+    // CEO ka greeting
+    document.getElementById('homeGreeting') && (document.getElementById('homeGreeting').textContent = '');
   } else {
     ['nav-all-tasks','nav-employees','nav-att-report','nav-leave-approve'].forEach(id => {
       document.getElementById(id).style.display = 'none';
@@ -1423,9 +1543,7 @@ function showApp() {
   loadHome();
   showView('home');
 
-  const h = new Date().getHours();
-  const greet = h < 12 ? '☀️ Good Morning' : h < 17 ? '🌤️ Good Afternoon' : '🌆 Good Evening';
-  document.getElementById('homeGreeting').textContent = greet + ', ' + currentUser.name + '!';
+  // Greeting handled in loadHome now
 
   const today = new Date().toISOString().split('T')[0];
   const atStart = document.getElementById('at-start');
@@ -1480,266 +1598,333 @@ function showView(name) {
 //  HOME
 // ═══════════════════════════════════════════
 async function loadHome() {
-  const { data: tasks } = await sb.from('tasks').select('*').eq('assigned_to_email', currentUser.email).neq('work_status','Completed').order('tat_date',{ascending:true}).limit(5);
-  myTasks = tasks || [];
-  document.getElementById('nb-tasks').textContent = myTasks.length;
+  const isCEO = currentUser.role === 'ceo' || currentUser.role === 'manager';
 
-  const { data: allMyTasks } = await sb.from('tasks').select('work_status').eq('assigned_to_email', currentUser.email);
-  const ns = (allMyTasks||[]).filter(t => t.work_status === 'Not Started').length;
-  const ip = (allMyTasks||[]).filter(t => t.work_status === 'In Progress').length;
-  const done = (allMyTasks||[]).filter(t => t.work_status === 'Completed').length;
-
-  // CEO dashboard premium stats
-  if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
-    const { count: totalEmp } = await sb.from('employees').select('*',{count:'exact'}).eq('is_active',true);
-    const { count: totalTasks } = await sb.from('tasks').select('*',{count:'exact'});
-    const { count: pendingLeaves } = await sb.from('leaves').select('*',{count:'exact'}).eq('status','Pending');
-    const { count: doneTasks } = await sb.from('tasks').select('*',{count:'exact'}).eq('work_status','Completed');
-
-    document.getElementById('nb-leave-approve').textContent = pendingLeaves || 0;
-    if (pendingLeaves > 0) document.getElementById('nb-leave-approve').style.display = 'inline-block';
-
-    // Get today attendance
-    const todayDate = new Date().toISOString().split('T')[0];
-    const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', todayDate);
-    const presentToday = (todayAtt||[]).filter(a=>a.status==='Present'||a.status==='Half Day').length;
-    const absentToday = (totalEmp||0) - presentToday - (pendingLeaves||0);
-
-    // Get delayed tasks
-    const { data: allTasks } = await sb.from('tasks').select('*');
-    const today2 = new Date(); today2.setHours(0,0,0,0);
-    const delayedTasks = (allTasks||[]).filter(t=>{
-      const tat = t.tat_date ? new Date(t.tat_date) : null;
-      return tat && today2 > tat && t.work_status !== 'Completed';
-    });
-
-    document.getElementById('ceoDashStats').innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px">
-        <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer;position:relative;overflow:hidden" onclick="showView('employees')">
-          <div style="font-size:16px;margin-bottom:6px">👥</div>
-          <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${totalEmp||0}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Employees</div>
-        </div>
-        <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer;position:relative;overflow:hidden" onclick="showView('allTasks')">
-          <div style="font-size:16px;margin-bottom:6px">📋</div>
-          <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${totalTasks||0}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Total Tasks</div>
-        </div>
-        <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="showView('allTasks')">
-          <div style="font-size:16px;margin-bottom:6px">✅</div>
-          <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${doneTasks||0}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Completed</div>
-        </div>
-        <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--green);cursor:pointer">
-          <div style="font-size:16px;margin-bottom:6px">🟢</div>
-          <div style="font-size:22px;font-weight:800;color:var(--green);line-height:1">${presentToday}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Present Today</div>
-        </div>
-        <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--red);cursor:pointer" onclick="showView('allTasks')">
-          <div style="font-size:16px;margin-bottom:6px">⚠️</div>
-          <div style="font-size:22px;font-weight:800;color:var(--red);line-height:1">${delayedTasks.length}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Delayed</div>
-        </div>
-        <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--blue);cursor:pointer" onclick="showView('leaveApprove')">
-          <div style="font-size:16px;margin-bottom:6px">⏳</div>
-          <div style="font-size:22px;font-weight:800;color:var(--amber);line-height:1">${pendingLeaves||0}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Leave Pending</div>
-        </div>
-      </div>
-    `;
-    document.getElementById('homeStats').innerHTML = '';
+  if (isCEO) {
+    document.getElementById('empDashboard').style.display = 'none';
+    document.getElementById('ceoDashboard').style.display = 'block';
+    await loadCeoDashboard();
   } else {
-    document.getElementById('ceoDashStats').innerHTML = '';
-    document.getElementById('homeStats').innerHTML = `
-      <div class="stat-card sc-navy"><div class="stat-icon">○</div><div class="stat-num">${ns}</div><div class="stat-lbl">Not Started</div></div>
-      <div class="stat-card sc-blue"><div class="stat-icon">⚡</div><div class="stat-num">${ip}</div><div class="stat-lbl">In Progress</div></div>
-      <div class="stat-card sc-green"><div class="stat-icon">✅</div><div class="stat-num">${done}</div><div class="stat-lbl">Completed</div></div>
-      <div class="stat-card sc-gold"><div class="stat-icon">📋</div><div class="stat-num">${(allMyTasks||[]).length}</div><div class="stat-lbl">Total Tasks</div></div>
-    `;
+    document.getElementById('empDashboard').style.display = 'block';
+    document.getElementById('ceoDashboard').style.display = 'none';
+    await loadEmpDashboard();
   }
 
-  // Task list
-  const taskListEl = document.getElementById('homeTaskList');
-  if (!myTasks.length) {
-    taskListEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">All caught up!</div><p>No pending tasks</p></div>';
+  loadBirthdaySection();
+}
+
+async function loadEmpDashboard() {
+  // Greeting
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+  document.getElementById('empGreeting').textContent = greet + ', ' + currentUser.name + '! 👋';
+
+  // Date
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('empDateSub').textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+  // Clock
+  updateEmpClock();
+
+  // Profile Card
+  document.getElementById('empProfileName').textContent = currentUser.name;
+  document.getElementById('empProfileDesig').textContent = currentUser.designation || currentUser.role.toUpperCase();
+  document.getElementById('empProfileCode').textContent = 'Employee ID: ' + (currentUser.employee_code || '—');
+
+  // Avatar initials or photo
+  const avEl = document.getElementById('empPhotoAv');
+  if (currentUser.photo_url) {
+    avEl.innerHTML = `<img src="${currentUser.photo_url}" style="width:56px;height:56px;object-fit:cover;border-radius:50%"/>`;
   } else {
-    taskListEl.innerHTML = '<div style="padding:8px 16px">' + myTasks.map(t => {
-      const today = new Date(); today.setHours(0,0,0,0);
-      const tat = t.tat_date ? new Date(t.tat_date) : null;
-      const isLate = tat && today > tat;
-      return `<div class="task-list-item">
-        <div class="task-dot" style="background:${t.work_status==='In Progress'?'#1a4fa0':isLate?'#c0392b':'#6b7280'}"></div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;color:var(--navy)">${esc(t.project)}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(t.task_detail.substring(0,60))}${t.task_detail.length>60?'...':''}</div>
-          <div style="margin-top:5px;display:flex;gap:6px;align-items:center">
-            ${statusBadge(t.work_status)}
-            ${tat?`<span style="font-size:10px;color:${isLate?'var(--red)':'var(--muted)'};font-weight:600">TAT: ${fmtDate(t.tat_date)}</span>`:''}
-          </div>
-        </div>
-      </div>`;
-    }).join('') + '</div>';
+    avEl.textContent = currentUser.name.substring(0,2).toUpperCase();
   }
 
-  // Notices + Birthday
-  const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
-  const noticesEl = document.getElementById('homeNotices');
-  
-  // Check birthdays for notices panel
-  const bdayList = await checkBirthdays();
-  let bdayHTML = '';
-  if (bdayList && bdayList.length) {
-    bdayHTML = bdayList.map(e => `
-      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="badge" style="background:#fdf6e3;color:#92680a;font-size:10px">🎂 Birthday</span>
-          <span style="font-size:13px;font-weight:600;color:var(--navy)">${esc(e.name)}</span>
+  // Today attendance - Login/Logout buttons
+  const today = new Date().toISOString().split('T')[0];
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).eq('date', today).single();
+
+  const loginBtn = document.getElementById('empLoginBtn');
+  const logoutBtn = document.getElementById('empLogoutBtn');
+  const loginDone = document.getElementById('empLoginDone');
+  const loginStatus = document.getElementById('empLoginStatus');
+
+  if (!todayAtt) {
+    loginBtn.style.display = 'block';
+    logoutBtn.style.display = 'none';
+    loginDone.style.display = 'none';
+    loginStatus.textContent = 'Not logged in today';
+    loginStatus.style.color = 'var(--muted)';
+    document.getElementById('empHrsWorked').textContent = '0h';
+  } else if (todayAtt.check_in && !todayAtt.check_out) {
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'block';
+    loginDone.style.display = 'none';
+    const inTime = new Date(todayAtt.check_in).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    loginStatus.textContent = 'Logged in at ' + inTime;
+    loginStatus.style.color = 'var(--green)';
+    // Calculate hours so far
+    const hrs = ((new Date() - new Date(todayAtt.check_in)) / 3600000).toFixed(1);
+    document.getElementById('empHrsWorked').textContent = hrs + 'h';
+  } else if (todayAtt.check_in && todayAtt.check_out) {
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    loginDone.style.display = 'block';
+    const inTime = new Date(todayAtt.check_in).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    const outTime = new Date(todayAtt.check_out).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    loginStatus.textContent = 'In: ' + inTime + ' | Out: ' + outTime;
+    loginStatus.style.color = 'var(--green)';
+    document.getElementById('empHrsWorked').textContent = (todayAtt.working_hours || 0) + 'h';
+  }
+
+  // Open tasks count
+  const { data: myTasks } = await sb.from('tasks').select('id').eq('assigned_to_email', currentUser.email).neq('work_status', 'Completed').neq('work_status', 'Report Ready');
+  document.getElementById('empOpenTasks').textContent = (myTasks || []).length;
+
+  // Tasks table
+  const { data: tasks } = await sb.from('tasks').select('*').eq('assigned_to_email', currentUser.email).order('tat_date', {ascending: true}).limit(5);
+  const tbody = document.getElementById('empTaskTable');
+  if (!tasks || !tasks.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No tasks assigned</td></tr>';
+  } else {
+    const todayD = new Date(); todayD.setHours(0,0,0,0);
+    tbody.innerHTML = tasks.map((t, i) => {
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      const isLate = tat && todayD > tat && t.work_status !== 'Completed';
+      return `<tr style="${isLate ? 'background:#fdf0ee' : ''}">
+        <td style="font-size:11px;color:var(--muted)">${i+1}</td>
+        <td><span style="background:#e8ecf5;color:var(--navy);padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">${esc(t.project)}</span></td>
+        <td style="font-size:12px;max-width:160px">${esc(t.task_detail.substring(0,40))}${t.task_detail.length>40?'...':''}</td>
+        <td>${statusBadge(t.work_status)}</td>
+        <td style="font-size:11px;color:${isLate?'var(--red)':'var(--muted)'};font-weight:${isLate?'700':'400'}">${fmtDate(t.tat_date)}${isLate?' ⚠️':''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // On Leave Today
+  const { data: leaveToday } = await sb.from('leaves').select('*').eq('status', 'Approved').lte('from_date', today).gte('to_date', today);
+  const leaveTodayEl = document.getElementById('empLeaveToday');
+  if (!leaveToday || !leaveToday.length) {
+    leaveTodayEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No one on leave today</div>';
+  } else {
+    leaveTodayEl.innerHTML = leaveToday.map(l => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f6fa">
+        <div class="av" style="background:var(--navy);width:28px;height:28px;font-size:10px">${esc(l.employee_name).substring(0,2).toUpperCase()}</div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(l.employee_name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(l.leave_type)} Leave</div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px">🎉 Wishing a wonderful birthday!</div>
+        <span class="badge b-blue" style="margin-left:auto;font-size:10px">On Leave</span>
       </div>
     `).join('');
   }
 
-  if (!notices || !notices.length) {
-    noticesEl.innerHTML = bdayHTML || '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No notices yet</p>';
+  // Work Anniversary & Joinings
+  const mm = String(new Date().getMonth()+1).padStart(2,'0');
+  const dd = String(new Date().getDate()).padStart(2,'0');
+  const { data: emps } = await sb.from('employees').select('name,designation,joining_date,employee_code').eq('is_active', true);
+  const anniversaries = (emps || []).filter(e => {
+    if (!e.joining_date) return false;
+    const jd = new Date(e.joining_date);
+    return String(jd.getMonth()+1).padStart(2,'0') === mm && String(jd.getDate()).padStart(2,'0') === dd;
+  });
+  const annEl = document.getElementById('empAnniversary');
+  if (!anniversaries.length) {
+    annEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No work anniversaries today</div>';
   } else {
-    noticesEl.innerHTML = bdayHTML + notices.map(n => `
+    annEl.innerHTML = anniversaries.map(e => {
+      const years = new Date().getFullYear() - new Date(e.joining_date).getFullYear();
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f6fa">
+        <span style="font-size:20px">🎊</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(e.name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${years} year${years!==1?'s':''} with Sayash Vastu!</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Upcoming Birthdays (this month)
+  const { data: allEmps } = await sb.from('employees').select('name,designation,date_of_birth').eq('is_active', true);
+  const upcomingBdays = (allEmps || []).filter(e => {
+    if (!e.date_of_birth) return false;
+    const dob = new Date(e.date_of_birth);
+    return String(dob.getMonth()+1).padStart(2,'0') === mm;
+  }).sort((a,b) => new Date(a.date_of_birth).getDate() - new Date(b.date_of_birth).getDate());
+
+  const bdayEl = document.getElementById('empBirthdays');
+  if (!upcomingBdays.length) {
+    bdayEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No birthdays this month</div>';
+  } else {
+    bdayEl.innerHTML = upcomingBdays.map(e => {
+      const dob = new Date(e.date_of_birth);
+      const isToday = String(dob.getDate()).padStart(2,'0') === dd;
+      const months2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f6fa">
+        <div class="av" style="background:${isToday?'var(--gold)':'var(--navy)'};width:32px;height:32px;font-size:11px;color:${isToday?'var(--navy)':'#fff'}">${esc(e.name).substring(0,2).toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(e.name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(e.designation||'')}</div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:${isToday?'var(--gold)':'var(--muted)'}">
+          ${isToday ? '🎂 Today!' : dob.getDate() + ' ' + months2[dob.getMonth()]}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Notices
+  const { data: notices } = await sb.from('notices').select('*').eq('is_active', true).order('created_at', {ascending: false}).limit(4);
+  const noticesEl = document.getElementById('homeNotices');
+  if (!notices || !notices.length) {
+    noticesEl.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No notices yet</p>';
+  } else {
+    noticesEl.innerHTML = notices.map(n => `
       <div style="padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:6px">
           <span class="badge ${n.priority==='Urgent'?'b-red':n.priority==='High'?'b-gold':'b-blue'}" style="font-size:10px">${n.priority}</span>
-          <span style="font-size:13px;font-weight:600;color:var(--navy)">${esc(n.title)}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--navy)">${esc(n.title)}</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(n.content.substring(0,80))}...</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(n.content.substring(0,70))}...</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${new Date(n.created_at).toLocaleDateString('en-IN')}</div>
       </div>
     `).join('');
   }
 
+  // Today's attendance log
   loadTodayAttendanceWidget();
-  loadBirthdaySection();
-  if (currentUser.role === 'ceo' || currentUser.role === 'manager') {
-    loadCeoActivityFeed();
+}
+
+async function loadCeoDashboard() {
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+  document.getElementById('homeGreeting').textContent = greet + ', ' + currentUser.name + '! 👋';
+  document.getElementById('homeSubtitle').textContent = "Here's your company overview for today";
+
+  const { count: totalEmp } = await sb.from('employees').select('*',{count:'exact'}).eq('is_active',true);
+  const { count: totalTasks } = await sb.from('tasks').select('*',{count:'exact'});
+  const { count: pendingLeaves } = await sb.from('leaves').select('*',{count:'exact'}).eq('status','Pending');
+  const { count: doneTasks } = await sb.from('tasks').select('*',{count:'exact'}).eq('work_status','Completed');
+
+  const todayDate = new Date().toISOString().split('T')[0];
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', todayDate);
+  const presentToday = (todayAtt||[]).filter(a=>a.status==='Present'||a.status==='Half Day').length;
+
+  const { data: allTasks } = await sb.from('tasks').select('*');
+  const today2 = new Date(); today2.setHours(0,0,0,0);
+  const delayedTasks = (allTasks||[]).filter(t=>{
+    const tat = t.tat_date ? new Date(t.tat_date) : null;
+    return tat && today2 > tat && t.work_status !== 'Completed';
+  });
+
+  document.getElementById('nb-leave-approve').textContent = pendingLeaves || 0;
+  if (pendingLeaves > 0) document.getElementById('nb-leave-approve').style.display = 'inline-block';
+
+  document.getElementById('ceoDashStats').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px">
+      <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="showView('employees')">
+        <div style="font-size:16px;margin-bottom:6px">👥</div>
+        <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${totalEmp||0}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Employees</div>
+      </div>
+      <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="showView('allTasks')">
+        <div style="font-size:16px;margin-bottom:6px">📋</div>
+        <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${totalTasks||0}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Total Tasks</div>
+      </div>
+      <div style="background:var(--navy);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="showView('allTasks')">
+        <div style="font-size:16px;margin-bottom:6px">✅</div>
+        <div style="font-size:22px;font-weight:800;color:#fff;line-height:1">${doneTasks||0}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Completed</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--green);cursor:pointer">
+        <div style="font-size:16px;margin-bottom:6px">🟢</div>
+        <div style="font-size:22px;font-weight:800;color:var(--green);line-height:1">${presentToday}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Present Today</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--red);cursor:pointer" onclick="showView('allTasks')">
+        <div style="font-size:16px;margin-bottom:6px">⚠️</div>
+        <div style="font-size:22px;font-weight:800;color:var(--red);line-height:1">${delayedTasks.length}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Delayed</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 12px;border:1px solid var(--border);border-left:3px solid var(--amber);cursor:pointer" onclick="showView('leaveApprove')">
+        <div style="font-size:16px;margin-bottom:6px">⏳</div>
+        <div style="font-size:22px;font-weight:800;color:var(--amber);line-height:1">${pendingLeaves||0}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700">Leave Pending</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('homeStats').innerHTML = '';
+  document.getElementById('ceoActivitySection').style.display = 'block';
+  loadCeoActivityFeed();
+
+  // CEO notices
+  const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
+  const noticesEl = document.getElementById('homeNotices');
+  if (noticesEl) {
+    if (!notices||!notices.length) {
+      noticesEl.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No notices yet</p>';
+    } else {
+      noticesEl.innerHTML = notices.map(n=>`
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="badge ${n.priority==='Urgent'?'b-red':n.priority==='High'?'b-gold':'b-blue'}" style="font-size:10px">${n.priority}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--navy)">${esc(n.title)}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(n.content.substring(0,80))}...</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  loadTodayAttendanceWidget();
+}
+
+function updateEmpClock() {
+  const el = document.getElementById('empClock');
+  if (el) {
+    el.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
   }
 }
 
-async function loadCeoActivityFeed() {
-  document.getElementById('ceoActivitySection').style.display = 'block';
-  const { data: tasks } = await sb.from('tasks').select('*').order('updated_at',{ascending:false});
-  const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', new Date().toISOString().split('T')[0]);
-  const { data: emps } = await sb.from('employees').select('name,email,designation').eq('is_active',true);
-  const el = document.getElementById('ceoActivityFeed');
-
-  if (!tasks || !tasks.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No activity yet</p></div>';
-    return;
-  }
-
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  // Group by employee - show summary card per employee
-  const empMap = {};
-  tasks.forEach(t => {
-    if (!empMap[t.assigned_to_name]) empMap[t.assigned_to_name] = [];
-    empMap[t.assigned_to_name].push(t);
+async function markEmpLogin() {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const btn = document.getElementById('empLoginBtn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  const { data: emp } = await sb.from('employees').select('id').eq('email', currentUser.email).single();
+  const { error } = await sb.from('attendance').insert({
+    employee_id: emp?.id,
+    employee_email: currentUser.email,
+    employee_name: currentUser.name,
+    date: today,
+    check_in: now.toISOString(),
+    status: 'Present'
   });
+  btn.disabled = false; btn.textContent = '🔐 Log In';
+  if (error) { showToast('❌ '+error.message, 'err'); return; }
+  showToast('✅ Logged in at '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}), 'ok');
+  loadEmpDashboard();
+}
 
-  let html = '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">';
-
-  Object.keys(empMap).forEach(empName => {
-    const empTasks = empMap[empName];
-    const activeTasks = empTasks.filter(t => t.work_status !== 'Completed' && t.work_status !== 'Report Ready');
-    const completedCount = empTasks.filter(t => t.work_status === 'Completed' || t.work_status === 'Report Ready').length;
-    const delayedCount = activeTasks.filter(t => {
-      const tat = t.tat_date ? new Date(t.tat_date) : null;
-      return tat && today > tat;
-    }).length;
-
-    const attRecord = (todayAtt||[]).find(a => a.employee_name === empName);
-    const empInfo = (emps||[]).find(e => e.name === empName);
-
-    let attBadge = '<span class="badge b-red" style="font-size:10px">Absent</span>';
-    if (attRecord?.check_in && !attRecord?.check_out) attBadge = '<span class="badge b-green" style="font-size:10px">Present</span>';
-    else if (attRecord?.check_in && attRecord?.check_out) attBadge = '<span class="badge b-blue" style="font-size:10px">Checked Out</span>';
-    else if (attRecord?.status === 'Half Day') attBadge = '<span class="badge b-amber" style="font-size:10px">Half Day</span>';
-
-    // Most urgent/latest task
-    const urgentTask = activeTasks.sort((a,b) => {
-      const tatA = a.tat_date ? new Date(a.tat_date) : new Date('9999');
-      const tatB = b.tat_date ? new Date(b.tat_date) : new Date('9999');
-      return tatA - tatB;
-    })[0];
-
-    // Pending with
-    let pendingWith = '—'; let pendingColor = 'var(--muted)';
-    if (urgentTask) {
-      if (urgentTask.work_status === 'Not Started' || urgentTask.work_status === 'In Progress') {
-        pendingWith = empName; pendingColor = 'var(--blue)';
-      } else if (urgentTask.work_status === 'Sent to Senior') {
-        pendingWith = '🔍 Senior Review'; pendingColor = 'var(--purple)';
-      } else if (urgentTask.work_status === 'Senior Approved') {
-        pendingWith = '⏳ CEO Approval'; pendingColor = '#c9a84c';
-      } else if (urgentTask.work_status === 'Sent for Review') {
-        pendingWith = '🔄 Under Review'; pendingColor = 'var(--amber)';
-      }
-    }
-
-    const isLate = urgentTask && (() => { const tat = urgentTask.tat_date ? new Date(urgentTask.tat_date) : null; return tat && today > tat; })();
-
-    html += `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;${isLate?'border-left:3px solid var(--red)':delayedCount===0&&activeTasks.length===0?'border-left:3px solid var(--green)':'border-left:3px solid var(--blue)'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-        
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="av" style="background:var(--navy);width:34px;height:34px;font-size:12px">${esc(empName).substring(0,2).toUpperCase()}</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--navy)">${esc(empName)}</div>
-            <div style="font-size:10px;color:var(--muted)">${esc(empInfo?.designation||'')}</div>
-          </div>
-          ${attBadge}
-        </div>
-
-        <div style="display:flex;gap:16px;align-items:center">
-          <div style="text-align:center">
-            <div style="font-size:16px;font-weight:800;color:var(--blue)">${activeTasks.length}</div>
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Active</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:16px;font-weight:800;color:var(--green)">${completedCount}</div>
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Done</div>
-          </div>
-          ${delayedCount>0?`<div style="text-align:center">
-            <div style="font-size:16px;font-weight:800;color:var(--red)">${delayedCount}</div>
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Delayed</div>
-          </div>`:''}
-        </div>
-
-        ${urgentTask?`<div style="background:#f8f9fc;border-radius:8px;padding:8px 12px;flex:1;min-width:200px;max-width:340px">
-          <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Current Task</div>
-          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(urgentTask.project)} — ${esc(urgentTask.task_detail.substring(0,40))}${urgentTask.task_detail.length>40?'...':''}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-            ${statusBadge(urgentTask.work_status)}
-            <span style="font-size:10px;color:${isLate?'var(--red)':'var(--muted)'};font-weight:600">TAT: ${fmtDate(urgentTask.tat_date)}${isLate?' ⚠️':''}</span>
-          </div>
-        </div>`:'<div style="font-size:12px;color:var(--green);font-weight:600">✅ All tasks completed!</div>'}
-
-        <div style="text-align:right">
-          ${urgentTask && urgentTask.work_status==='Senior Approved' ? `
-          <div style="font-size:9px;color:var(--muted);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">CEO Finalize</div>
-          <select onchange="ceoFinalizeTask('${urgentTask.id}',this.value)" 
-            style="padding:5px 10px;border:1.5px solid var(--gold);border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--navy);background:#fdf6e3;font-weight:600">
-            <option value="">— Select —</option>
-            <option>Finalize with SG</option>
-            <option>Finalize with YG</option>
-          </select>
-          ` : `
-          <div style="font-size:11px;font-weight:600;color:${pendingColor}">${pendingWith}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:2px">Pending with</div>
-          `}
-        </div>
-      </div>
-    </div>`;
-  });
-
-  html += '</div>';
-  el.innerHTML = html;
+async function markEmpLogout() {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const btn = document.getElementById('empLogoutBtn');
+  btn.disabled = true; btn.textContent = 'Logging out...';
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).eq('date', today).single();
+  if (!todayAtt) { showToast('❌ No login found!', 'err'); btn.disabled=false; btn.textContent='🚪 Log Out'; return; }
+  const hrs = ((now - new Date(todayAtt.check_in))/3600000).toFixed(2);
+  const { error } = await sb.from('attendance').update({
+    check_out: now.toISOString(),
+    working_hours: hrs,
+    status: hrs < 4 ? 'Half Day' : 'Present'
+  }).eq('id', todayAtt.id);
+  btn.disabled = false; btn.textContent = '🚪 Log Out';
+  if (error) { showToast('❌ '+error.message, 'err'); return; }
+  showToast('✅ Logged out! Worked '+hrs+' hrs', 'ok');
+  loadEmpDashboard();
 }
 
 async function loadTodayAttendanceWidget() {
