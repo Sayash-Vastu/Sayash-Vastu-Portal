@@ -608,7 +608,13 @@ tbody tr:hover{background:#fafbff}
       <button class="nav-btn" id="nav-leaves" onclick="showView('leaves')">
         <span class="ni">🏖️</span><span>Leave</span><span class="nav-badge" id="nb-leaves" style="display:none">0</span>
       </button>
+      <button class="nav-btn" onclick="showView('holidays')"><span class="ni">🗓️</span><span>Holidays</span></button>
+      <button class="nav-btn" onclick="showView('hrPolicy')"><span class="ni">📜</span><span>HR Policy</span></button>
+
+      <div class="sidebar-section">Company</div>
       <button class="nav-btn" onclick="showView('notices')"><span class="ni">📢</span><span>Notice Board</span></button>
+
+      <div class="sidebar-section">Account</div>
       <button class="nav-btn" id="nav-profile" onclick="showView('myProfile')"><span class="ni">⚙️</span><span>My Profile</span></button>
 
       <div class="sidebar-section" id="ceo-section" style="display:none">CEO Panel</div>
@@ -907,9 +913,11 @@ tbody tr:hover{background:#fafbff}
       <div class="view" id="view-attendance">
         <div class="page-header">
           <h2>Attendance</h2>
-          <p>Mark your daily attendance</p>
+          <p>Track your daily attendance</p>
         </div>
-        <div class="att-check-card">
+
+        <!-- Check In/Out Banner -->
+        <div class="att-check-card" style="margin-bottom:20px">
           <div>
             <div class="att-time" id="attClock">--:--</div>
             <div class="att-date" id="attDate">Loading...</div>
@@ -921,21 +929,53 @@ tbody tr:hover{background:#fafbff}
             <div id="attCheckedMsg" style="color:rgba(255,255,255,0.7);font-size:13px;display:none"></div>
           </div>
         </div>
-        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-          <div class="stat-card sc-green"><div class="stat-icon">✅</div><div class="stat-num" id="att-present">0</div><div class="stat-lbl">Present Days</div></div>
-          <div class="stat-card sc-red"><div class="stat-icon">❌</div><div class="stat-num" id="att-absent">0</div><div class="stat-lbl">Absent Days</div></div>
-          <div class="stat-card sc-gold"><div class="stat-icon">⏱️</div><div class="stat-num" id="att-half">0</div><div class="stat-lbl">Half Days</div></div>
-          <div class="stat-card sc-blue"><div class="stat-icon">🏖️</div><div class="stat-num" id="att-leave">0</div><div class="stat-lbl">On Leave</div></div>
+
+        <!-- Month selector + Stats -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <div style="font-size:13px;font-weight:600;color:var(--navy)">Month:</div>
+          <input type="month" id="att-my-month" onchange="loadMyAttendance()" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none"/>
+          <button class="btn-export" onclick="exportMyAttPDF()">📄 Export PDF</button>
         </div>
-        <div class="panel">
-          <div class="panel-head">
-            <div class="panel-title">📅 This Month's Attendance</div>
+
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+          <div class="stat-card sc-green"><div class="stat-icon">✅</div><div class="stat-num" id="att-present">0</div><div class="stat-lbl">Present</div></div>
+          <div class="stat-card sc-red"><div class="stat-icon">❌</div><div class="stat-num" id="att-absent">0</div><div class="stat-lbl">Absent</div></div>
+          <div class="stat-card sc-gold"><div class="stat-icon">⏱️</div><div class="stat-num" id="att-half">0</div><div class="stat-lbl">Half Day</div></div>
+          <div class="stat-card sc-blue"><div class="stat-icon">🏖️</div><div class="stat-num" id="att-leave">0</div><div class="stat-lbl">On Leave</div></div>
+          <div class="stat-card sc-purple"><div class="stat-icon">📊</div><div class="stat-num" id="att-pct">0%</div><div class="stat-lbl">Attendance %</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+          <!-- Attendance Log Table -->
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">📅 Monthly Attendance Log</div>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Day</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
+                <tbody id="attBody"></tbody>
+              </table>
+            </div>
           </div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
-              <tbody id="attBody"></tbody>
-            </table>
+
+          <!-- Right: Summary -->
+          <div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">📊 Monthly Summary</div></div>
+              <div id="attSummary" style="padding:14px 16px">
+                <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Select month to view</div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:14px">
+              <div class="panel-head"><div class="panel-title">🗓️ Legend</div></div>
+              <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px"><span class="badge b-green">Present</span><span style="font-size:12px;color:var(--muted)">Full day attended</span></div>
+                <div style="display:flex;align-items:center;gap:8px"><span class="badge b-red">Absent</span><span style="font-size:12px;color:var(--muted)">No attendance marked</span></div>
+                <div style="display:flex;align-items:center;gap:8px"><span class="badge b-amber">Half Day</span><span style="font-size:12px;color:var(--muted)">Less than 4 hours</span></div>
+                <div style="display:flex;align-items:center;gap:8px"><span class="badge b-blue">On Leave</span><span style="font-size:12px;color:var(--muted)">Approved leave</span></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -946,45 +986,60 @@ tbody tr:hover{background:#fafbff}
           <h2>Leave Management</h2>
           <p>Apply for leave and track your leave balance</p>
         </div>
-        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
           <div class="stat-card sc-green"><div class="stat-icon">🗓️</div><div class="stat-num" id="lv-balance">12</div><div class="stat-lbl">Leave Balance</div></div>
           <div class="stat-card sc-gold"><div class="stat-icon">⏳</div><div class="stat-num" id="lv-pending">0</div><div class="stat-lbl">Pending</div></div>
           <div class="stat-card sc-blue"><div class="stat-icon">✈️</div><div class="stat-num" id="lv-taken">0</div><div class="stat-lbl">Taken This Year</div></div>
+          <div class="stat-card sc-red"><div class="stat-icon">❌</div><div class="stat-num" id="lv-rejected">0</div><div class="stat-lbl">Rejected</div></div>
         </div>
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">🏖️ Apply for Leave</div></div>
-          <div class="panel-body">
-            <div class="form-grid cols-2">
-              <div class="field">
-                <label>Leave Type</label>
-                <select id="lv-type">
-                  <option>Casual</option><option>Sick</option><option>Earned</option><option>Unpaid</option>
-                </select>
+
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+          <div>
+            <!-- Leave History -->
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">📋 My Leave History</div>
+                <button class="btn-export" onclick="exportLeavesPDF()">📄 Export PDF</button>
               </div>
-              <div class="field">
-                <label>From Date</label><input type="date" id="lv-from"/>
+              <div class="tbl-wrap">
+                <table>
+                  <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                  <tbody id="leaveBody"></tbody>
+                </table>
               </div>
-              <div class="field">
-                <label>To Date</label><input type="date" id="lv-to"/>
-              </div>
-              <div class="field" style="grid-column:1/-1">
-                <label>Reason</label>
-                <textarea id="lv-reason" placeholder="Reason for leave..."></textarea>
-              </div>
-            </div>
-            <div style="margin-top:12px">
-              <button class="btn btn-gold" onclick="applyLeave()">Apply Leave</button>
-              <span id="leaveMsg" style="margin-left:12px;font-size:12px;font-weight:600"></span>
             </div>
           </div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">📋 My Leave History</div></div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody id="leaveBody"></tbody>
-            </table>
+
+          <!-- Right: Apply Form -->
+          <div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">🏖️ Apply for Leave</div></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Leave Type</label>
+                    <select id="lv-type">
+                      <option>Casual</option><option>Sick</option><option>Earned</option><option>Unpaid</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>From Date</label><input type="date" id="lv-from"/></div>
+                  <div class="field"><label>To Date</label><input type="date" id="lv-to"/></div>
+                  <div class="field">
+                    <label>Reason</label>
+                    <textarea id="lv-reason" placeholder="Reason for leave..." style="min-height:80px"></textarea>
+                  </div>
+                </div>
+                <button class="btn btn-gold" style="width:100%;margin-top:10px" onclick="applyLeave()">Apply Leave</button>
+                <span id="leaveMsg" style="display:block;margin-top:8px;font-size:12px;font-weight:600;text-align:center"></span>
+              </div>
+            </div>
+
+            <!-- Leave type breakdown -->
+            <div class="panel" style="margin-top:14px">
+              <div class="panel-head"><div class="panel-title">📊 Leave Breakdown</div></div>
+              <div id="leaveBreakdown" style="padding:12px 16px"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1100,6 +1155,96 @@ tbody tr:hover{background:#fafbff}
           <p>Tasks waiting for your approval before CEO review</p>
         </div>
         <div id="seniorReviewList"></div>
+      </div>
+
+      <!-- HOLIDAYS VIEW -->
+      <div class="view" id="view-holidays">
+        <div class="page-header">
+          <h2>Holidays</h2>
+          <p>Company holiday calendar for 2026</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">🗓️ Holiday List — 2026</div>
+              <button class="btn-export" onclick="exportHolidaysPDF()">📄 Export PDF</button>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Holiday</th><th>Date</th><th>Day</th><th>Type</th></tr></thead>
+                <tbody id="holidaysBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">📊 Summary</div></div>
+              <div class="panel-body">
+                <div style="display:flex;flex-direction:column;gap:10px" id="holidaySummary"></div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:14px">
+              <div class="panel-head"><div class="panel-title">📅 Upcoming</div></div>
+              <div id="upcomingHolidays" style="padding:12px 16px"></div>
+            </div>
+            <!-- CEO: Add Holiday -->
+            <div class="panel" id="addHolidayPanel" style="margin-top:14px;display:none">
+              <div class="panel-head"><div class="panel-title">➕ Add Holiday</div></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="field"><label>Holiday Name</label><input type="text" id="h-title" placeholder="e.g. Diwali"/></div>
+                  <div class="form-grid cols-2">
+                    <div class="field"><label>Date</label><input type="date" id="h-date"/></div>
+                    <div class="field"><label>Type</label>
+                      <select id="h-type">
+                        <option>National</option><option>Festival</option><option>Optional</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-gold" style="margin-top:10px" onclick="addHoliday()">➕ Add</button>
+                <span id="holidayMsg" style="margin-left:10px;font-size:12px;font-weight:600"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HR POLICY VIEW -->
+      <div class="view" id="view-hrPolicy">
+        <div class="page-header">
+          <h2>HR Policies</h2>
+          <p>Company policies — read and acknowledge</p>
+        </div>
+        <!-- CEO Upload Panel -->
+        <div id="ceo-policy-panel" style="display:none">
+          <div class="panel" style="margin-bottom:20px">
+            <div class="panel-head"><div class="panel-title">📤 Upload New Policy</div></div>
+            <div class="panel-body">
+              <div class="form-grid cols-2">
+                <div class="field"><label>Policy Title</label><input type="text" id="pol-title" placeholder="e.g. Leave Policy 2026"/></div>
+                <div class="field"><label>Description</label><input type="text" id="pol-desc" placeholder="Brief description..."/></div>
+              </div>
+              <div class="field" style="margin-top:12px">
+                <label>Upload PDF</label>
+                <div class="upload-zone" onclick="document.getElementById('pol-file').click()" style="padding:14px">
+                  <input type="file" id="pol-file" accept=".pdf" onchange="previewPolicyFile(this)" style="display:none"/>
+                  <div id="pol-preview">
+                    <div class="upload-zone-icon">📄</div>
+                    <div class="upload-zone-text">Click to upload PDF</div>
+                    <div class="upload-zone-hint">PDF only — max 10MB</div>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+                <button class="btn btn-gold" onclick="uploadPolicy()">📤 Upload Policy</button>
+                <span id="policyUploadMsg" style="font-size:12px;font-weight:600"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Policies List -->
+        <div id="policiesList"></div>
       </div>
 
       <!-- MY PROFILE VIEW -->
@@ -1769,6 +1914,8 @@ const viewTitles = {
   leaveApprove: ['Leave Approvals','Approve or reject leave requests'],
   seniorReview: ['Senior Review','Approve tasks before CEO review'],
   myProfile: ['My Profile','Update your personal information'],
+  holidays: ['Holidays','Company holiday calendar 2026'],
+  hrPolicy: ['HR Policies','Company policies — read and acknowledge'],
 };
 
 function showView(name) {
@@ -1784,7 +1931,7 @@ function showView(name) {
 
   if (name === 'home') loadHome();
   if (name === 'tasks') loadMyTasks();
-  if (name === 'attendance') loadAttendance();
+  if (name === 'attendance') { loadAttendance(); initAttMonth(); }
   if (name === 'leaves') loadLeaves();
   if (name === 'notices') loadNotices();
   if (name === 'allTasks') loadAllTasks();
@@ -1797,6 +1944,8 @@ function showView(name) {
   if (name === 'leaveApprove') loadLeaveApprovals();
   if (name === 'seniorReview') loadSeniorReview();
   if (name === 'myProfile') loadMyProfile();
+  if (name === 'holidays') loadHolidays();
+  if (name === 'hrPolicy') loadHRPolicies();
 }
 
 // ═══════════════════════════════════════════
@@ -2494,6 +2643,15 @@ async function loadAttendance() {
   </tr>`).join('');
 }
 
+function initAttMonth() {
+  const now = new Date();
+  const monthEl = document.getElementById('att-my-month');
+  if (monthEl && !monthEl.value) {
+    monthEl.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    loadMyAttendance();
+  }
+}
+
 async function markCheckIn() {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
@@ -2537,8 +2695,24 @@ async function loadLeaves() {
   const leaves = data || [];
   const pending = leaves.filter(l=>l.status==='Pending').length;
   const taken = leaves.filter(l=>l.status==='Approved').reduce((s,l)=>s+(l.total_days||0),0);
+  const rejected = leaves.filter(l=>l.status==='Rejected').length;
   document.getElementById('lv-pending').textContent=pending;
   document.getElementById('lv-taken').textContent=taken;
+  document.getElementById('lv-rejected') && (document.getElementById('lv-rejected').textContent=rejected);
+  document.getElementById('lv-balance').textContent=Math.max(0,12-taken);
+  
+  // Leave breakdown by type
+  const bdEl = document.getElementById('leaveBreakdown');
+  if (bdEl) {
+    const types = ['Casual','Sick','Earned','Unpaid'];
+    bdEl.innerHTML = types.map(t => {
+      const count = leaves.filter(l=>l.leave_type===t&&l.status==='Approved').reduce((s,l)=>s+(l.total_days||0),0);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f6fa">
+        <span style="font-size:12px;color:var(--muted)">${t} Leave</span>
+        <span style="font-size:13px;font-weight:700;color:var(--navy)">${count} day${count!==1?'s':''}</span>
+      </div>`;
+    }).join('');
+  }
   const tbody = document.getElementById('leaveBody');
   if (!leaves.length) {
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No leave records</td></tr>'; return;
@@ -2998,6 +3172,364 @@ async function savePassword() {
   if (error) { msgEl.textContent = '❌ ' + error.message; msgEl.style.color = 'var(--red)'; return; }
   showToast('✅ Password updated!', 'ok');
   closeModal('passModal');
+}
+
+// ═══════════════════════════════════════════
+//  HOLIDAYS
+// ═══════════════════════════════════════════
+async function loadHolidays() {
+  // Show add panel for CEO
+  const addPanel = document.getElementById('addHolidayPanel');
+  if (addPanel) addPanel.style.display = (currentUser.role==='ceo'||currentUser.role==='manager') ? 'block' : 'none';
+
+  const { data } = await sb.from('holidays').select('*').order('date', {ascending: true});
+  const tbody = document.getElementById('holidaysBody');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No holidays found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map((h, i) => {
+    const hDate = new Date(h.date);
+    const isPast = hDate < today;
+    const isToday = hDate.toDateString() === today.toDateString();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `<tr style="${isToday?'background:#fdf6e3':isPast?'opacity:0.5':''}">
+      <td style="font-size:11px;color:var(--muted)">${i+1}</td>
+      <td style="font-weight:600;color:var(--navy)">${esc(h.title)}${isToday?' 🎉':''}</td>
+      <td style="font-size:12px">${hDate.getDate()} ${months[hDate.getMonth()]} ${hDate.getFullYear()}</td>
+      <td style="font-size:12px">${days[hDate.getDay()]}</td>
+      <td><span class="badge ${h.type==='National'?'b-blue':h.type==='Festival'?'b-gold':'b-gray'}">${h.type}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Summary
+  const national = data.filter(h=>h.type==='National').length;
+  const festival = data.filter(h=>h.type==='Festival').length;
+  const remaining = data.filter(h=>new Date(h.date)>=today).length;
+  document.getElementById('holidaySummary').innerHTML = `
+    <div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:8px">
+      <span style="font-size:12px;color:var(--muted)">Total Holidays</span>
+      <span style="font-size:13px;font-weight:700;color:var(--navy)">${data.length}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:8px">
+      <span style="font-size:12px;color:var(--muted)">National</span>
+      <span style="font-size:13px;font-weight:700;color:var(--blue)">${national}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:8px">
+      <span style="font-size:12px;color:var(--muted)">Festival</span>
+      <span style="font-size:13px;font-weight:700;color:var(--amber)">${festival}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px;background:#e6f5ee;border-radius:8px">
+      <span style="font-size:12px;color:var(--green);font-weight:600">Remaining</span>
+      <span style="font-size:13px;font-weight:700;color:var(--green)">${remaining}</span>
+    </div>
+  `;
+
+  // Upcoming holidays
+  const upcoming = data.filter(h=>new Date(h.date)>=today).slice(0,3);
+  const upEl = document.getElementById('upcomingHolidays');
+  if (!upcoming.length) {
+    upEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px">No upcoming holidays</div>';
+  } else {
+    const months2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    upEl.innerHTML = upcoming.map(h => {
+      const hDate = new Date(h.date);
+      const diff = Math.ceil((hDate-today)/(1000*60*60*24));
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f5f6fa">
+        <div style="width:40px;height:40px;border-radius:8px;background:${h.type==='National'?'var(--blue-bg)':'var(--amber-bg)'};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="font-size:14px;font-weight:800;color:${h.type==='National'?'var(--blue)':'var(--amber)'}">${hDate.getDate()}</div>
+          <div style="font-size:8px;color:${h.type==='National'?'var(--blue)':'var(--amber)'}">${months2[hDate.getMonth()]}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(h.title)}</div>
+          <div style="font-size:11px;color:var(--muted)">${diff===0?'Today!':diff===1?'Tomorrow':diff+' days away'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function addHoliday() {
+  const title = document.getElementById('h-title').value.trim();
+  const date = document.getElementById('h-date').value;
+  const type = document.getElementById('h-type').value;
+  const msg = document.getElementById('holidayMsg');
+  if (!title || !date) { msg.textContent='⚠️ Fill all fields'; msg.style.color='var(--red)'; return; }
+  const { error } = await sb.from('holidays').insert({ title, date, type });
+  if (error) { msg.textContent='❌ '+error.message; msg.style.color='var(--red)'; return; }
+  msg.textContent='✅ Holiday added!'; msg.style.color='var(--green)';
+  document.getElementById('h-title').value='';
+  document.getElementById('h-date').value='';
+  loadHolidays();
+  setTimeout(()=>msg.textContent='',3000);
+}
+
+function exportHolidaysPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Sayash Vastu — Holiday List 2026', 14, 18);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('Generated: '+new Date().toLocaleDateString('en-IN'), 14, 26);
+  let y = 36;
+  doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('#    Holiday                    Date              Day      Type', 14, y);
+  y += 4; doc.line(14, y, 196, y); y += 5;
+  doc.setFont('helvetica','normal');
+  const rows = document.querySelectorAll('#holidaysBody tr');
+  rows.forEach((row, i) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 5) {
+      doc.text(`${cells[0].textContent}.  ${cells[1].textContent.padEnd(25)} ${cells[2].textContent.padEnd(18)} ${cells[3].textContent.padEnd(8)} ${cells[4].textContent}`, 14, y);
+      y += 6;
+    }
+  });
+  doc.save('SayashVastu_Holidays_2026.pdf');
+  showToast('✅ Holidays PDF exported!','ok');
+}
+
+// ═══════════════════════════════════════════
+//  HR POLICIES
+// ═══════════════════════════════════════════
+async function loadHRPolicies() {
+  const ceoPanel = document.getElementById('ceo-policy-panel');
+  if (ceoPanel) ceoPanel.style.display = (currentUser.role==='ceo'||currentUser.role==='manager') ? 'block' : 'none';
+
+  const { data: policies } = await sb.from('hr_policies').select('*').eq('is_active', true).order('created_at', {ascending: false});
+  const el = document.getElementById('policiesList');
+
+  if (!policies || !policies.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div class="empty-title">No policies uploaded yet</div><p>CEO will upload company policies here</p></div>';
+    return;
+  }
+
+  // Get acknowledgements for current user
+  const { data: acks } = await sb.from('policy_acknowledgements').select('policy_id').eq('employee_email', currentUser.email);
+  const ackedIds = (acks || []).map(a => a.policy_id);
+
+  el.innerHTML = policies.map(p => {
+    const isAcked = ackedIds.includes(p.id);
+    return `<div class="panel" style="margin-bottom:14px">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">📜 ${esc(p.title)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(p.description||'')} · Uploaded: ${new Date(p.created_at).toLocaleDateString('en-IN')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${isAcked ? '<span class="badge b-green">✅ Acknowledged</span>' : 
+            p.mandatory_acknowledge ? '<span class="badge b-red">⚠️ Action Required</span>' : '<span class="badge b-gray">Optional</span>'}
+          ${(currentUser.role==='ceo'||currentUser.role==='manager') ? `<button class="btn btn-sm btn-red" onclick="deletePolicy('${p.id}')">🗑️</button>` : ''}
+        </div>
+      </div>
+      <div class="panel-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">📄</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy)">${esc(p.file_name||'Policy Document')}</div>
+            ${p.mandatory_acknowledge && !isAcked ? '<div style="font-size:11px;color:var(--red);font-weight:600;margin-top:2px">⚠️ Please read and acknowledge this policy</div>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          ${p.file_url ? `<a href="${p.file_url}" target="_blank" class="btn btn-outline btn-sm">👁️ View PDF</a>` : ''}
+          ${!isAcked ? `<button class="btn btn-gold btn-sm" onclick="acknowledgePolicy('${p.id}')">✅ I have read this policy</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function acknowledgePolicy(policyId) {
+  const { error } = await sb.from('policy_acknowledgements').insert({
+    policy_id: policyId,
+    employee_email: currentUser.email,
+    employee_name: currentUser.name
+  });
+  if (error) { showToast('❌ '+error.message, 'err'); return; }
+  showToast('✅ Policy acknowledged!', 'ok');
+  loadHRPolicies();
+}
+
+async function deletePolicy(policyId) {
+  if (!confirm('Delete this policy?')) return;
+  await sb.from('hr_policies').update({is_active: false}).eq('id', policyId);
+  showToast('✅ Policy removed!', 'ok');
+  loadHRPolicies();
+}
+
+function previewPolicyFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('pol-preview').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:24px">📄</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--navy)">${file.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${(file.size/1024).toFixed(0)} KB</div>
+      </div>
+    </div>`;
+}
+
+async function uploadPolicy() {
+  const title = document.getElementById('pol-title').value.trim();
+  const desc = document.getElementById('pol-desc').value.trim();
+  const file = document.getElementById('pol-file').files[0];
+  const msgEl = document.getElementById('policyUploadMsg');
+  if (!title) { msgEl.textContent='⚠️ Enter policy title'; msgEl.style.color='var(--red)'; return; }
+  if (!file) { msgEl.textContent='⚠️ Select a PDF file'; msgEl.style.color='var(--red)'; return; }
+  msgEl.textContent='⏳ Uploading...'; msgEl.style.color='var(--muted)';
+  const path = `policies/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi,'_')}`;
+  const { error: uploadErr } = await sb.storage.from('task-files').upload(path, file, {upsert: false});
+  if (uploadErr) { msgEl.textContent='❌ '+uploadErr.message; msgEl.style.color='var(--red)'; return; }
+  const { data: urlData } = sb.storage.from('task-files').getPublicUrl(path);
+  const { error } = await sb.from('hr_policies').insert({
+    title, description: desc,
+    file_url: urlData.publicUrl,
+    file_name: file.name,
+    mandatory_acknowledge: true,
+    created_by_name: currentUser.name,
+    created_by_email: currentUser.email
+  });
+  if (error) { msgEl.textContent='❌ '+error.message; msgEl.style.color='var(--red)'; return; }
+  msgEl.textContent='✅ Policy uploaded!'; msgEl.style.color='var(--green)';
+  document.getElementById('pol-title').value='';
+  document.getElementById('pol-desc').value='';
+  document.getElementById('pol-file').value='';
+  document.getElementById('pol-preview').innerHTML='<div class="upload-zone-icon">📄</div><div class="upload-zone-text">Click to upload PDF</div>';
+  loadHRPolicies();
+  setTimeout(()=>msgEl.textContent='',4000);
+}
+
+// ═══════════════════════════════════════════
+//  ATTENDANCE - ENHANCED
+// ═══════════════════════════════════════════
+async function loadMyAttendance() {
+  const monthVal = document.getElementById('att-my-month').value;
+  if (!monthVal) return;
+  const [yr, mo] = monthVal.split('-');
+  const start = `${yr}-${mo}-01`;
+  const end = new Date(yr, mo, 0).toISOString().split('T')[0];
+  const totalDays = new Date(yr, mo, 0).getDate();
+
+  const { data: attData } = await sb.from('attendance').select('*')
+    .eq('employee_email', currentUser.email)
+    .gte('date', start).lte('date', end)
+    .order('date', {ascending: false});
+
+  const present = (attData||[]).filter(a=>a.status==='Present').length;
+  const absent = (attData||[]).filter(a=>a.status==='Absent').length;
+  const half = (attData||[]).filter(a=>a.status==='Half Day').length;
+  const leave = (attData||[]).filter(a=>a.status==='Leave').length;
+  const pct = totalDays > 0 ? Math.round((present/totalDays)*100) : 0;
+
+  document.getElementById('att-present').textContent = present;
+  document.getElementById('att-absent').textContent = absent;
+  document.getElementById('att-half').textContent = half;
+  document.getElementById('att-leave').textContent = leave;
+  document.getElementById('att-pct').textContent = pct + '%';
+
+  // Summary card
+  const totalHrs = (attData||[]).reduce((s,a) => s + parseFloat(a.working_hours||0), 0);
+  const avgHrs = present > 0 ? (totalHrs/present).toFixed(1) : 0;
+  document.getElementById('attSummary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--bg);border-radius:8px">
+        <span style="font-size:12px;color:var(--muted)">Working Days</span>
+        <span style="font-size:13px;font-weight:700;color:var(--navy)">${totalDays}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--green-bg);border-radius:8px">
+        <span style="font-size:12px;color:var(--green)">Attendance %</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">${pct}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--bg);border-radius:8px">
+        <span style="font-size:12px;color:var(--muted)">Total Hours</span>
+        <span style="font-size:13px;font-weight:700;color:var(--navy)">${totalHrs.toFixed(1)}h</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--bg);border-radius:8px">
+        <span style="font-size:12px;color:var(--muted)">Avg Hours/Day</span>
+        <span style="font-size:13px;font-weight:700;color:var(--navy)">${avgHrs}h</span>
+      </div>
+    </div>
+  `;
+
+  // Table
+  const days2 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const tbody = document.getElementById('attBody');
+  if (!attData || !attData.length) {
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No attendance records this month</td></tr>';
+    return;
+  }
+  tbody.innerHTML = attData.map(a => {
+    const d = new Date(a.date);
+    const isWeekend = d.getDay()===0||d.getDay()===6;
+    return `<tr style="${isWeekend?'background:#f8f9fc':''}">
+      <td style="font-weight:600">${fmtDate(a.date)}</td>
+      <td style="font-size:11px;color:${isWeekend?'var(--muted)':'var(--text)'}">${days2[d.getDay()]}</td>
+      <td>${a.check_in?new Date(a.check_in).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—'}</td>
+      <td>${a.check_out?new Date(a.check_out).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—'}</td>
+      <td style="font-weight:600">${a.working_hours?parseFloat(a.working_hours).toFixed(1)+'h':'—'}</td>
+      <td>${attBadge(a.status)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportMyAttPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const monthVal = document.getElementById('att-my-month').value;
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Sayash Vastu — My Attendance Report', 14, 18);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text(`Employee: ${currentUser.name} | Month: ${monthVal}`, 14, 26);
+  const rows = document.querySelectorAll('#attBody tr');
+  let y = 36;
+  doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('Date           Day    Check In   Check Out  Hours  Status', 14, y);
+  y += 4; doc.line(14, y, 196, y); y += 5;
+  doc.setFont('helvetica','normal');
+  rows.forEach(row => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 6) {
+      doc.text(`${cells[0].textContent.padEnd(15)} ${cells[1].textContent.padEnd(7)} ${cells[2].textContent.padEnd(11)} ${cells[3].textContent.padEnd(11)} ${cells[4].textContent.padEnd(7)} ${cells[5].textContent}`, 14, y);
+      y += 6;
+    }
+  });
+  doc.save(`SayashVastu_Attendance_${currentUser.name}_${monthVal}.pdf`);
+  showToast('✅ Attendance PDF exported!','ok');
+}
+
+// ═══════════════════════════════════════════
+//  LEAVES - ENHANCED
+// ═══════════════════════════════════════════
+async function exportLeavesPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Sayash Vastu — Leave Report', 14, 18);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text(`Employee: ${currentUser.name} | Generated: ${new Date().toLocaleDateString('en-IN')}`, 14, 26);
+  const rows = document.querySelectorAll('#leaveBody tr');
+  let y = 36;
+  doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('Type       From         To           Days  Reason                Status', 14, y);
+  y += 4; doc.line(14, y, 196, y); y += 5;
+  doc.setFont('helvetica','normal');
+  rows.forEach(row => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 6) {
+      const line = `${cells[0].textContent.padEnd(11)} ${cells[1].textContent.padEnd(13)} ${cells[2].textContent.padEnd(13)} ${cells[3].textContent.padEnd(6)} ${cells[4].textContent.substring(0,20).padEnd(22)} ${cells[5].textContent}`;
+      doc.text(line, 14, y);
+      y += 6;
+    }
+  });
+  doc.save(`SayashVastu_Leaves_${currentUser.name}.pdf`);
+  showToast('✅ Leave PDF exported!','ok');
 }
 
 // ═══════════════════════════════════════════
