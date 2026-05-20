@@ -1243,6 +1243,21 @@ tbody tr:hover{background:#fafbff}
                 <label>Message / What help do you need?</label>
                 <textarea id="help-message" placeholder="Describe what help you need..."></textarea>
               </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>Attach File (Optional)</label>
+                <div class="upload-zone" onclick="document.getElementById('help-file').click()" style="padding:12px">
+                  <input type="file" id="help-file" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.docx,.dwg,.zip" onchange="previewHelpFile(this)" style="display:none"/>
+                  <div id="help-file-preview">
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+                      <span style="font-size:20px">📎</span>
+                      <div>
+                        <div class="upload-zone-text">Click to attach file</div>
+                        <div class="upload-zone-hint">PDF, Image, Excel, Word, DWG — max 10MB</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
               <button class="btn btn-gold" onclick="sendHelpRequest()">📌 Pin Help Request</button>
@@ -3548,11 +3563,26 @@ async function loadHelpRequests() {
   }
 }
 
+function previewHelpFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('help-file-preview').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <span style="font-size:20px">📎</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--navy)">${file.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${(file.size/1024).toFixed(0)} KB</div>
+      </div>
+    </div>`;
+}
+
 async function sendHelpRequest() {
   const toName = document.getElementById('help-to-name').value.trim();
   const project = document.getElementById('help-project').value.trim();
   const message = document.getElementById('help-message').value.trim();
   const msgEl = document.getElementById('helpMsg');
+  const fileInput = document.getElementById('help-file');
+  const file = fileInput ? fileInput.files[0] : null;
 
   if (!toName || !message) { msgEl.textContent='⚠️ Fill all fields'; msgEl.style.color='var(--red)'; return; }
 
@@ -3560,10 +3590,25 @@ async function sendHelpRequest() {
   const { data: emp } = await sb.from('employees').select('name,email').eq('name',toName).single();
   if (!emp) { msgEl.textContent='⚠️ Employee not found'; msgEl.style.color='var(--red)'; return; }
 
+  // Upload file if selected
+  let fileUrl = null; let fileName = null;
+  if (file) {
+    if (file.size > 10 * 1024 * 1024) { msgEl.textContent='❌ File too large (max 10MB)'; msgEl.style.color='var(--red)'; return; }
+    msgEl.textContent='⏳ Uploading file...'; msgEl.style.color='var(--muted)';
+    const path = `help-requests/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi,'_')}`;
+    const { error: uploadErr } = await sb.storage.from('task-files').upload(path, file, {upsert: false});
+    if (!uploadErr) {
+      const { data: urlData } = sb.storage.from('task-files').getPublicUrl(path);
+      fileUrl = urlData.publicUrl;
+      fileName = file.name;
+    }
+  }
+
   const { error } = await sb.from('help_requests').insert({
     from_email: currentUser.email, from_name: currentUser.name,
     to_email: emp.email, to_name: emp.name,
-    project_name: project, message
+    project_name: project, message,
+    file_url: fileUrl, file_name: fileName
   });
 
   if (error) { msgEl.textContent='❌ '+error.message; msgEl.style.color='var(--red)'; return; }
@@ -3590,6 +3635,15 @@ Sayash Vastu Portal`,
   document.getElementById('help-to-name').value='';
   document.getElementById('help-project').value='';
   document.getElementById('help-message').value='';
+  if (fileInput) fileInput.value='';
+  document.getElementById('help-file-preview').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <span style="font-size:20px">📎</span>
+      <div>
+        <div class="upload-zone-text">Click to attach file</div>
+        <div class="upload-zone-hint">PDF, Image, Excel, Word, DWG — max 10MB</div>
+      </div>
+    </div>`;
   loadHelpRequests();
   setTimeout(()=>msgEl.textContent='',4000);
 }
