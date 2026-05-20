@@ -1705,7 +1705,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const EJS_PUBLIC_KEY  = 'UJnNfp5bX02L9vf6e';
 const EJS_SERVICE_ID  = 'service_tntf75k';
 const EJS_TEMPLATE_ID = 'template_7164mdh';
-const CEO_EMAIL       = 'sayashinternal@gmail.com';
+const CEO_EMAIL       = 'yash@sayashvastu.com';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVaC0hQXJLb-HN02Tb6nhTNTReFfs6cF4YwJQN8uNBVoao-mh15W_FLMg8anDOp8I_/exec';
 emailjs.init(EJS_PUBLIC_KEY);
 
@@ -3273,7 +3273,7 @@ async function renderAllTasks() {
 //  EMPLOYEES CEO
 // ═══════════════════════════════════════════
 async function loadEmployees() {
-  const { data } = await sb.from('employees').select('*').eq('is_active',true).order('created_at',{ascending:false});
+  const { data } = await sb.from('employees').select('*').eq('is_active',true).order('employee_code',{ascending:true});
   const tbody=document.getElementById('employeesBody');
   if (!data||!data.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No employees</td></tr>'; return; }
   tbody.innerHTML=data.map(e=>`<tr>
