@@ -1878,13 +1878,9 @@ function showApp() {
     document.getElementById('ceo-section').style.display = 'block';
     document.getElementById('nav-ceo-parent').style.display = 'flex';
     document.getElementById('ceo-notice-form').style.display = 'block';
-    // CEO ko My Tasks, Attendance, Leave nahi chahiye sidebar mein
+    // CEO ko My Tasks nahi chahiye sidebar mein
     document.getElementById('nav-tasks').style.display = 'none';
     document.getElementById('nav-assign').style.display = 'none';
-    document.getElementById('nav-attendance').style.display = 'none';
-    document.getElementById('nav-leaves').style.display = 'none';
-    // CEO ka greeting
-    document.getElementById('homeGreeting') && (document.getElementById('homeGreeting').textContent = '');
   } else {
     ['nav-all-tasks','nav-employees','nav-att-report','nav-leave-approve'].forEach(id => {
       document.getElementById(id).style.display = 'none';
@@ -1892,6 +1888,8 @@ function showApp() {
     document.getElementById('ceo-section').style.display = 'none';
     document.getElementById('ceo-notice-form').style.display = 'none';
     document.getElementById('nav-tasks').style.display = 'flex';
+    const ceoParentBtn = document.getElementById('nav-ceo-parent');
+    if (ceoParentBtn) ceoParentBtn.style.display = 'none';
     // Senior Review - Alisha ya koi bhi senior designation wala
     const seniorDesignations = ['Senior Vastu Research Analyst','Senior Designer','Project Head','Manager'];
     if (seniorDesignations.includes(currentUser.designation)) {
@@ -2007,6 +2005,9 @@ async function loadHome() {
 }
 
 async function loadEmpDashboard() {
+  // Clear CEO stats — employee dashboard nahi dikhne chahiye
+  document.getElementById('ceoDashStats').innerHTML = '';
+
   // Greeting
   const h = new Date().getHours();
   const greet = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
