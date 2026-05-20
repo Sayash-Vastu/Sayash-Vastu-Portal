@@ -593,23 +593,39 @@ tbody tr:hover{background:#fafbff}
       <button class="nav-btn active" onclick="showView('home')"><span class="ni">🏠</span><span>Dashboard</span></button>
 
       <div class="sidebar-section">Work</div>
-      <button class="nav-btn" onclick="showView('tasks')" id="nav-tasks">
-        <span class="ni">📋</span><span>My Tasks</span><span class="nav-badge" id="nb-tasks">0</span>
+      <!-- Work Parent -->
+      <button class="nav-btn" onclick="toggleSideMenu('workMenu')" id="nav-work-parent">
+        <span class="ni">💼</span><span>Work</span>
+        <span id="work-arrow" style="margin-left:auto;font-size:10px;transition:transform 0.2s">▶</span>
       </button>
-      <button class="nav-btn" id="nav-senior-review" onclick="showView('seniorReview')" style="display:none">
-        <span class="ni">🔍</span><span>Senior Review</span><span class="nav-badge" id="nb-senior">0</span>
-      </button>
-      <button class="nav-btn" id="nav-assign" onclick="showView('assign')" style="display:none">
-        <span class="ni">➕</span><span>Assign Task</span>
-      </button>
+      <!-- Work Children -->
+      <div id="workMenu" style="display:none">
+        <button class="nav-btn" onclick="showView('tasks')" id="nav-tasks" style="padding-left:32px">
+          <span class="ni">📋</span><span>My Tasks</span><span class="nav-badge" id="nb-tasks">0</span>
+        </button>
+        <button class="nav-btn" id="nav-senior-review" onclick="showView('seniorReview')" style="display:none;padding-left:32px">
+          <span class="ni">🔍</span><span>Senior Review</span><span class="nav-badge" id="nb-senior">0</span>
+        </button>
+        <button class="nav-btn" id="nav-assign" onclick="showView('assign')" style="display:none;padding-left:32px">
+          <span class="ni">➕</span><span>Assign Task</span>
+        </button>
+      </div>
 
       <div class="sidebar-section">HR</div>
-      <button class="nav-btn" id="nav-attendance" onclick="showView('attendance')"><span class="ni">⏰</span><span>Attendance</span></button>
-      <button class="nav-btn" id="nav-leaves" onclick="showView('leaves')">
-        <span class="ni">🏖️</span><span>Leave</span><span class="nav-badge" id="nb-leaves" style="display:none">0</span>
+      <!-- HR Parent -->
+      <button class="nav-btn" onclick="toggleSideMenu('hrMenu')" id="nav-hr-parent">
+        <span class="ni">👥</span><span>HR</span>
+        <span id="hr-arrow" style="margin-left:auto;font-size:10px;transition:transform 0.2s">▶</span>
       </button>
-      <button class="nav-btn" onclick="showView('holidays')"><span class="ni">🗓️</span><span>Holidays</span></button>
-      <button class="nav-btn" onclick="showView('hrPolicy')"><span class="ni">📜</span><span>HR Policy</span></button>
+      <!-- HR Children -->
+      <div id="hrMenu" style="display:none">
+        <button class="nav-btn" id="nav-attendance" onclick="showView('attendance')" style="padding-left:32px"><span class="ni">⏰</span><span>Attendance</span></button>
+        <button class="nav-btn" id="nav-leaves" onclick="showView('leaves')" style="padding-left:32px">
+          <span class="ni">🏖️</span><span>Leave</span><span class="nav-badge" id="nb-leaves" style="display:none">0</span>
+        </button>
+        <button class="nav-btn" onclick="showView('holidays')" style="padding-left:32px"><span class="ni">🗓️</span><span>Holidays</span></button>
+        <button class="nav-btn" onclick="showView('hrPolicy')" style="padding-left:32px"><span class="ni">📜</span><span>HR Policy</span></button>
+      </div>
 
       <div class="sidebar-section">Company</div>
       <button class="nav-btn" onclick="showView('notices')"><span class="ni">📢</span><span>Notice Board</span></button>
@@ -618,13 +634,19 @@ tbody tr:hover{background:#fafbff}
       <button class="nav-btn" id="nav-profile" onclick="showView('myProfile')"><span class="ni">⚙️</span><span>My Profile</span></button>
 
       <div class="sidebar-section" id="ceo-section" style="display:none">CEO Panel</div>
-      <button class="nav-btn" id="nav-all-tasks" onclick="showView('allTasks')" style="display:none"><span class="ni">📊</span><span>All Tasks</span></button>
-      <button class="nav-btn" id="nav-employees" onclick="showView('employees')" style="display:none"><span class="ni">👥</span><span>Employees</span></button>
-      <button class="nav-btn" id="nav-att-report" onclick="showView('attReport')" style="display:none"><span class="ni">📅</span><span>Att. Report</span></button>
-      <button class="nav-btn" id="nav-leave-approve" onclick="showView('leaveApprove')" style="display:none">
-        <span class="ni">✅</span><span>Leave Approvals</span>
-        <span class="nav-badge" id="nb-leave-approve" style="display:none">0</span>
+      <button class="nav-btn" id="nav-ceo-parent" onclick="toggleSideMenu('ceoMenu')" style="display:none">
+        <span class="ni">👑</span><span>Admin</span>
+        <span id="ceo-arrow" style="margin-left:auto;font-size:10px;transition:transform 0.2s">▶</span>
       </button>
+      <div id="ceoMenu" style="display:none">
+        <button class="nav-btn" id="nav-all-tasks" onclick="showView('allTasks')" style="display:none;padding-left:32px"><span class="ni">📊</span><span>All Tasks</span></button>
+        <button class="nav-btn" id="nav-employees" onclick="showView('employees')" style="display:none;padding-left:32px"><span class="ni">👥</span><span>Employees</span></button>
+        <button class="nav-btn" id="nav-att-report" onclick="showView('attReport')" style="display:none;padding-left:32px"><span class="ni">📅</span><span>Att. Report</span></button>
+        <button class="nav-btn" id="nav-leave-approve" onclick="showView('leaveApprove')" style="display:none;padding-left:32px">
+          <span class="ni">✅</span><span>Leave Approvals</span>
+          <span class="nav-badge" id="nb-leave-approve" style="display:none">0</span>
+        </button>
+      </div>
 
       <div class="sidebar-logout">
         <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
@@ -1854,6 +1876,7 @@ function showApp() {
       document.getElementById(id).style.display = 'flex';
     });
     document.getElementById('ceo-section').style.display = 'block';
+    document.getElementById('nav-ceo-parent').style.display = 'flex';
     document.getElementById('ceo-notice-form').style.display = 'block';
     // CEO ko My Tasks, Attendance, Leave nahi chahiye sidebar mein
     document.getElementById('nav-tasks').style.display = 'none';
@@ -1921,6 +1944,22 @@ const viewTitles = {
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  // Auto open parent menus
+  if (['tasks','assign','seniorReview'].includes(name)) {
+    document.getElementById('workMenu').style.display = 'block';
+    const arr = document.getElementById('work-arrow');
+    if (arr) arr.style.transform = 'rotate(90deg)';
+  }
+  if (['attendance','leaves','holidays','hrPolicy'].includes(name)) {
+    document.getElementById('hrMenu').style.display = 'block';
+    const arr = document.getElementById('hr-arrow');
+    if (arr) arr.style.transform = 'rotate(90deg)';
+  }
+  if (['allTasks','employees','attReport','leaveApprove'].includes(name)) {
+    document.getElementById('ceoMenu').style.display = 'block';
+    const arr = document.getElementById('ceo-arrow');
+    if (arr) arr.style.transform = 'rotate(90deg)';
+  }
   const el = document.getElementById('view-' + name);
   if (el) el.classList.add('active');
   const navBtn = document.querySelector(`[onclick="showView('${name}')"]`);
@@ -3844,6 +3883,17 @@ async function deleteTask(taskId, reload=false) {
 // ═══════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════
+function toggleSideMenu(menuId) {
+  const menu = document.getElementById(menuId);
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  // Update arrow
+  const arrowMap = {'workMenu':'work-arrow','hrMenu':'hr-arrow','ceoMenu':'ceo-arrow'};
+  const arrowEl = document.getElementById(arrowMap[menuId]);
+  if (arrowEl) arrowEl.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function fmtDate(d) {
