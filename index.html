@@ -710,7 +710,14 @@ tbody tr:hover{background:#fafbff}
                 <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;text-transform:uppercase;letter-spacing:1px">Current Time</div>
               </div>
               <div>
-                <button class="btn btn-gold" id="empLoginBtn" onclick="markEmpLogin()" style="display:none;padding:11px 24px;font-size:13px;font-weight:700">🔐 Log In</button>
+                <div id="loginTypeWrap" style="display:none;flex-direction:column;gap:8px;align-items:flex-end">
+              <div style="font-size:11px;color:rgba(255,255,255,0.6);font-weight:600;text-align:right">Select Work Type:</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn" onclick="markEmpLogin('Office')" style="padding:10px 16px;font-size:12px;font-weight:700;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25);color:#fff">🏢 WFO</button>
+                <button class="btn btn-gold" onclick="markEmpLogin('WFH')" style="padding:10px 16px;font-size:12px;font-weight:700">🏠 WFH</button>
+              </div>
+            </div>
+            <button class="btn btn-gold" id="empLoginBtn" onclick="showLoginTypeOptions()" style="display:none;padding:11px 24px;font-size:13px;font-weight:700">🔐 Log In</button>
                 <button class="btn" id="empLogoutBtn" onclick="markEmpLogout()" style="display:none;padding:11px 24px;font-size:13px;font-weight:700;background:rgba(192,57,43,0.85);border-color:rgba(192,57,43,0.5);color:#fff">🚪 Log Out</button>
                 <div id="empLoginDone" style="display:none;font-size:12px;color:var(--gold);font-weight:600;text-align:center">✅ Done for today!</div>
               </div>
@@ -1206,6 +1213,21 @@ tbody tr:hover{background:#fafbff}
                 <div class="field" style="grid-column:1/-1">
                   <label>Description / Notes</label>
                   <textarea id="proj-desc" placeholder="Project details..."></textarea>
+                </div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>Attach File (Optional)</label>
+                  <div class="upload-zone" onclick="document.getElementById('proj-file').click()" style="padding:12px">
+                    <input type="file" id="proj-file" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.docx,.dwg,.zip" onchange="previewProjFile(this)" style="display:none"/>
+                    <div id="proj-file-preview">
+                      <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+                        <span style="font-size:20px">📎</span>
+                        <div>
+                          <div class="upload-zone-text">Click to attach file</div>
+                          <div class="upload-zone-hint">PDF, Image, Excel, DWG — max 10MB</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
@@ -2166,6 +2188,8 @@ async function loadEmpDashboard() {
     loginBtn.style.display = 'block';
     logoutBtn.style.display = 'none';
     loginDone.style.display = 'none';
+    const lwrap = document.getElementById('loginTypeWrap');
+    if (lwrap) lwrap.style.display = 'none';
     loginStatus.textContent = 'Not logged in today';
     loginStatus.style.color = 'var(--muted)';
     document.getElementById('empHrsWorked').textContent = '0.0h';
@@ -2173,8 +2197,11 @@ async function loadEmpDashboard() {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'block';
     loginDone.style.display = 'none';
+    const lwrap2 = document.getElementById('loginTypeWrap');
+    if (lwrap2) lwrap2.style.display = 'none';
     const inTime = new Date(todayAtt.check_in).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-    loginStatus.textContent = 'Logged in at ' + inTime;
+    const wfhBadge = todayAtt.work_type === 'WFH' ? ' 🏠 WFH' : ' 🏢 Office';
+    loginStatus.textContent = 'Logged in at ' + inTime + wfhBadge;
     loginStatus.style.color = 'var(--green)';
     // Calculate hours so far
     const hrs = ((new Date() - new Date(todayAtt.check_in)) / 3600000).toFixed(1);
@@ -2452,11 +2479,18 @@ function updateEmpClock() {
   }
 }
 
-async function markEmpLogin() {
+function showLoginTypeOptions() {
+  const btn = document.getElementById('empLoginBtn');
+  const wrap = document.getElementById('loginTypeWrap');
+  if (btn) btn.style.display = 'none';
+  if (wrap) wrap.style.display = 'flex';
+}
+
+async function markEmpLogin(workType) {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
-  const btn = document.getElementById('empLoginBtn');
-  btn.disabled = true; btn.textContent = 'Logging in...';
+  const wrap = document.getElementById('loginTypeWrap');
+  if (wrap) wrap.style.display = 'none';
   const { data: emp } = await sb.from('employees').select('id').eq('email', currentUser.email).single();
   const { error } = await sb.from('attendance').insert({
     employee_id: emp?.id,
@@ -2464,11 +2498,11 @@ async function markEmpLogin() {
     employee_name: currentUser.name,
     date: today,
     check_in: now.toISOString(),
-    status: 'Present'
+    status: 'Present',
+    work_type: workType || 'Office'
   });
-  btn.disabled = false; btn.textContent = '🔐 Log In';
   if (error) { showToast('❌ '+error.message, 'err'); return; }
-  showToast('✅ Logged in at '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}), 'ok');
+  showToast(`✅ Logged in (${workType==='WFH'?'Work From Home':'Office'}) at `+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}), 'ok');
   loadEmpDashboard();
 }
 
@@ -3451,6 +3485,7 @@ async function loadProjects() {
               </div>
             `).join('') : '<span style="font-size:11px;color:var(--muted)">No members assigned</span>'}
           </div>
+          ${p.file_url ? `<div style="margin-top:10px"><a href="${p.file_url}" target="_blank" class="file-chip">📎 ${esc(p.file_name||'Attached File')}</a></div>` : ''}
         </div>
       </div>
     </div>`;
@@ -3471,9 +3506,25 @@ async function addProject() {
   const checkboxes = document.querySelectorAll('#proj-members-list input[type=checkbox]:checked');
   const members = Array.from(checkboxes).map(cb => ({ email: cb.value, name: cb.dataset.name }));
 
+  // Upload file if selected
+  const projFile = document.getElementById('proj-file');
+  let projFileUrl = null; let projFileName = null;
+  if (projFile && projFile.files[0]) {
+    const f = projFile.files[0];
+    msgEl.textContent='⏳ Uploading file...'; msgEl.style.color='var(--muted)';
+    const path = `projects/${Date.now()}_${f.name.replace(/[^a-z0-9.]/gi,'_')}`;
+    const { error: uploadErr } = await sb.storage.from('task-files').upload(path, f, {upsert: false});
+    if (!uploadErr) {
+      const { data: urlData } = sb.storage.from('task-files').getPublicUrl(path);
+      projFileUrl = urlData.publicUrl;
+      projFileName = f.name;
+    }
+  }
+
   const { error } = await sb.from('projects').insert({
     project_name: name, status, start_date: start||null, end_date: end||null,
     description: desc, assigned_to: members,
+    file_url: projFileUrl, file_name: projFileName,
     created_by_name: currentUser.name, created_by_email: currentUser.email
   });
 
@@ -3482,6 +3533,12 @@ async function addProject() {
   showToast('✅ Project added!','ok');
   document.getElementById('proj-name').value='';
   document.getElementById('proj-desc').value='';
+  if (projFile) { projFile.value=''; }
+  document.getElementById('proj-file-preview').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <span style="font-size:20px">📎</span>
+      <div><div class="upload-zone-text">Click to attach file</div><div class="upload-zone-hint">PDF, Image, Excel, DWG — max 10MB</div></div>
+    </div>`;
   loadProjects();
   setTimeout(()=>msgEl.textContent='',3000);
 }
@@ -3561,6 +3618,19 @@ async function loadHelpRequests() {
       </div>
     `).join('');
   }
+}
+
+function previewProjFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('proj-file-preview').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+      <span style="font-size:20px">📎</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--navy)">${file.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${(file.size/1024).toFixed(0)} KB</div>
+      </div>
+    </div>`;
 }
 
 function previewHelpFile(input) {
