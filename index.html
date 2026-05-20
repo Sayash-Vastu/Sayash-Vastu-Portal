@@ -841,26 +841,62 @@ tbody tr:hover{background:#fafbff}
               <div id="ceoActivityFeed" style="padding:0"></div>
             </div>
           </div>
-          <div class="home-grid">
-            <div>
-              <div class="panel">
-                <div class="panel-head">
-                  <div class="panel-title">📋 Recent Tasks</div>
-                  <button class="btn btn-outline btn-sm" onclick="showView('allTasks')">View All →</button>
-                </div>
-                <div id="homeTaskList"><div class="empty-state"><div class="empty-icon">📭</div><p>No active tasks</p></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+            <!-- On Leave Today -->
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-head"><div class="panel-title">🏖️ On Leave Today</div></div>
+              <div id="ceoLeaveToday" style="padding:12px 16px">
+                <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No one on leave</div>
               </div>
             </div>
+            <!-- WFH Today -->
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-head"><div class="panel-title">🏠 Work From Home</div></div>
+              <div id="ceoWFHToday" style="padding:12px 16px">
+                <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No one on WFH</div>
+              </div>
+            </div>
+            <!-- Work Anniversary -->
+            <div class="panel" style="margin-bottom:0">
+              <div class="panel-head"><div class="panel-title">🎊 Anniversary & Joinings</div></div>
+              <div id="ceoAnniversary" style="padding:12px 16px">
+                <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No records today</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
             <div>
+              <!-- Live Activity -->
+              <div id="ceoActivitySection" style="display:none;margin-bottom:16px">
+                <div class="panel">
+                  <div class="panel-head">
+                    <div class="panel-title">👁️ Live Company Activity</div>
+                    <button class="btn btn-outline btn-sm" onclick="showView('allTasks')">All Tasks →</button>
+                  </div>
+                  <div id="ceoActivityFeed" style="padding:0"></div>
+                </div>
+              </div>
+              <!-- Today's Log -->
               <div class="panel">
+                <div class="panel-head"><div class="panel-title">⏰ Today's Attendance Log</div></div>
+                <div id="ceoTodayLog" style="padding:0">
+                  <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px">Loading...</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <!-- Upcoming Birthdays -->
+              <div class="panel" style="margin-bottom:0">
+                <div class="panel-head"><div class="panel-title">🎂 Upcoming Birthdays</div></div>
+                <div id="ceoBirthdays" style="padding:8px 16px">
+                  <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No birthdays this month</div>
+                </div>
+              </div>
+              <!-- Notices -->
+              <div class="panel" style="margin-bottom:0">
                 <div class="panel-head"><div class="panel-title">📢 Latest Notices</div></div>
                 <div id="homeNotices" style="padding:12px 16px"></div>
-              </div>
-              <div class="panel" style="margin-top:16px">
-                <div class="panel-head"><div class="panel-title">🎂 Birthdays</div></div>
-                <div id="empBirthdays2" style="padding:12px 16px">
-                  <div style="text-align:center;color:var(--muted);font-size:13px;padding:10px">No birthdays today</div>
-                </div>
               </div>
             </div>
           </div>
@@ -2463,9 +2499,129 @@ async function loadCeoDashboard() {
             <span class="badge ${n.priority==='Urgent'?'b-red':n.priority==='High'?'b-gold':'b-blue'}" style="font-size:10px">${n.priority}</span>
             <span style="font-size:13px;font-weight:600;color:var(--navy)">${esc(n.title)}</span>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(n.content.substring(0,80))}...</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(n.content.substring(0,70))}...</div>
         </div>
       `).join('');
+    }
+  }
+
+  // On Leave Today
+  const todayStr = new Date().toISOString().split('T')[0];
+  const { data: leaveToday } = await sb.from('leaves').select('*').eq('status','Approved').lte('from_date',todayStr).gte('to_date',todayStr);
+  const leaveTodayEl = document.getElementById('ceoLeaveToday');
+  if (leaveTodayEl) {
+    if (!leaveToday||!leaveToday.length) {
+      leaveTodayEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No one on leave</div>';
+    } else {
+      leaveTodayEl.innerHTML = leaveToday.map(l=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f6fa">
+          <div class="av" style="background:var(--red);width:26px;height:26px;font-size:9px">${esc(l.employee_name).substring(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(l.employee_name)}</div>
+            <div style="font-size:10px;color:var(--muted)">${esc(l.leave_type)}</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  // WFH Today
+  const { data: wfhToday } = await sb.from('attendance').select('*').eq('date',todayStr).eq('work_type','WFH');
+  const wfhEl = document.getElementById('ceoWFHToday');
+  if (wfhEl) {
+    if (!wfhToday||!wfhToday.length) {
+      wfhEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No one on WFH</div>';
+    } else {
+      wfhEl.innerHTML = wfhToday.map(a=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f6fa">
+          <div class="av" style="background:var(--blue);width:26px;height:26px;font-size:9px">${esc(a.employee_name).substring(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(a.employee_name)}</div>
+            <div style="font-size:10px;color:var(--muted)">Working from home</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  // Work Anniversary & New Joinings
+  const mm = String(new Date().getMonth()+1).padStart(2,'0');
+  const dd = String(new Date().getDate()).padStart(2,'0');
+  const { data: allEmpsAnn } = await sb.from('employees').select('name,designation,joining_date').eq('is_active',true);
+  const anniversaries = (allEmpsAnn||[]).filter(e => {
+    if (!e.joining_date) return false;
+    const jd = new Date(e.joining_date);
+    return String(jd.getMonth()+1).padStart(2,'0')===mm && String(jd.getDate()).padStart(2,'0')===dd;
+  });
+  const annEl = document.getElementById('ceoAnniversary');
+  if (annEl) {
+    if (!anniversaries.length) {
+      annEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No anniversaries today</div>';
+    } else {
+      annEl.innerHTML = anniversaries.map(e => {
+        const years = new Date().getFullYear() - new Date(e.joining_date).getFullYear();
+        return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f6fa">
+          <span style="font-size:18px">${years===0?'🎉':'🎊'}</span>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(e.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">${years===0?'Joined Today!':years+' year'+(years!==1?'s':'')}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Today's Attendance Log
+  const { data: todayAttAll } = await sb.from('attendance').select('*').eq('date',todayStr).order('check_in',{ascending:true});
+  const todayLogEl = document.getElementById('ceoTodayLog');
+  if (todayLogEl) {
+    if (!todayAttAll||!todayAttAll.length) {
+      todayLogEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px">No attendance marked today</div>';
+    } else {
+      todayLogEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f8f9fc;border-bottom:1px solid var(--border)">
+          <th style="padding:8px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">Employee</th>
+          <th style="padding:8px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">Check In</th>
+          <th style="padding:8px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">Check Out</th>
+          <th style="padding:8px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">Hours</th>
+          <th style="padding:8px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">Type</th>
+          <th style="padding:8px 14px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">Status</th>
+        </tr></thead>
+        <tbody>${todayAttAll.map(a=>`<tr style="border-bottom:1px solid #f5f6fa">
+          <td style="padding:9px 14px;font-weight:600;color:var(--navy)">${esc(a.employee_name)}</td>
+          <td style="padding:9px 14px">${a.check_in?new Date(a.check_in).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—'}</td>
+          <td style="padding:9px 14px">${a.check_out?new Date(a.check_out).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—'}</td>
+          <td style="padding:9px 14px;font-weight:600">${a.working_hours?parseFloat(a.working_hours).toFixed(1)+'h':'—'}</td>
+          <td style="padding:9px 14px"><span class="badge ${a.work_type==='WFH'?'b-blue':'b-navy'}" style="font-size:10px">${a.work_type||'Office'}</span></td>
+          <td style="padding:9px 14px">${attBadge(a.status)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+  }
+
+  // Upcoming Birthdays for CEO
+  const { data: allEmpsBday } = await sb.from('employees').select('name,designation,date_of_birth').eq('is_active',true);
+  const upBdays = (allEmpsBday||[]).filter(e => {
+    if (!e.date_of_birth) return false;
+    const dob = new Date(e.date_of_birth);
+    return String(dob.getMonth()+1).padStart(2,'0')===mm;
+  }).sort((a,b)=>new Date(a.date_of_birth).getDate()-new Date(b.date_of_birth).getDate());
+  const ceoBdayEl = document.getElementById('ceoBirthdays');
+  if (ceoBdayEl) {
+    if (!upBdays.length) {
+      ceoBdayEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">No birthdays this month</div>';
+    } else {
+      const months2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      ceoBdayEl.innerHTML = upBdays.map(e=>{
+        const dob = new Date(e.date_of_birth);
+        const isToday = String(dob.getDate()).padStart(2,'0')===dd;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f6fa">
+          <div class="av" style="background:${isToday?'var(--gold)':'var(--navy)'};width:28px;height:28px;font-size:10px;color:${isToday?'var(--navy)':'#fff'}">${esc(e.name).substring(0,2).toUpperCase()}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(e.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">${esc(e.designation||'')}</div>
+          </div>
+          <div style="font-size:11px;font-weight:600;color:${isToday?'var(--gold)':'var(--muted)'}">${isToday?'🎂 Today!':dob.getDate()+' '+months2[dob.getMonth()]}</div>
+        </div>`;
+      }).join('');
     }
   }
 
