@@ -609,6 +609,13 @@ tbody tr:hover{background:#fafbff}
         <button class="nav-btn" id="nav-assign" onclick="showView('assign')" style="display:none;padding-left:32px">
           <span class="ni">➕</span><span>Assign Task</span>
         </button>
+        <button class="nav-btn" onclick="showView('projects')" style="padding-left:32px">
+          <span class="ni">🗂️</span><span>Projects</span>
+        </button>
+        <button class="nav-btn" onclick="showView('helpRequest')" style="padding-left:32px">
+          <span class="ni">🤝</span><span>Help Requests</span>
+          <span class="nav-badge" id="nb-help" style="display:none">0</span>
+        </button>
       </div>
 
       <div class="sidebar-section">HR</div>
@@ -1166,6 +1173,95 @@ tbody tr:hover{background:#fafbff}
               <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Half Day</th><th>Leave</th><th>Total Days</th><th>Attendance %</th></tr></thead>
               <tbody id="attReportBody"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECTS VIEW -->
+      <div class="view" id="view-projects">
+        <div class="page-header">
+          <h2>Projects</h2>
+          <p>Company project overview</p>
+        </div>
+        <div id="addProjectPanel" style="display:none;margin-bottom:20px">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">➕ Add New Project</div></div>
+            <div class="panel-body">
+              <div class="form-grid cols-2">
+                <div class="field"><label>Project Name</label><input type="text" id="proj-name" placeholder="e.g. CKPC Project"/></div>
+                <div class="field"><label>Status</label>
+                  <select id="proj-status">
+                    <option>In Progress</option>
+                    <option>Not Started</option>
+                    <option>On Hold</option>
+                    <option>Completed</option>
+                  </select>
+                </div>
+                <div class="field"><label>Start Date</label><input type="date" id="proj-start"/></div>
+                <div class="field"><label>End Date</label><input type="date" id="proj-end"/></div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>Assign Team Members</label>
+                  <div id="proj-members-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;padding:10px;border:1.5px solid var(--border);border-radius:8px;min-height:44px"></div>
+                </div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>Description / Notes</label>
+                  <textarea id="proj-desc" placeholder="Project details..."></textarea>
+                </div>
+              </div>
+              <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+                <button class="btn btn-gold" onclick="addProject()">🗂️ Add Project</button>
+                <span id="projMsg" style="font-size:12px;font-weight:600"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="projectsList"></div>
+      </div>
+
+      <!-- HELP REQUEST VIEW -->
+      <div class="view" id="view-helpRequest">
+        <div class="page-header">
+          <h2>Help Requests</h2>
+          <p>Request help from your colleagues</p>
+        </div>
+        <!-- Send Help Request -->
+        <div class="panel" style="margin-bottom:20px">
+          <div class="panel-head"><div class="panel-title">🤝 Request Help</div></div>
+          <div class="panel-body">
+            <div class="form-grid cols-2">
+              <div class="field">
+                <label>Request Help From</label>
+                <input type="text" id="help-to-name" list="helpNameList" placeholder="Select colleague..."/>
+                <datalist id="helpNameList"></datalist>
+              </div>
+              <div class="field">
+                <label>Related Project</label>
+                <input type="text" id="help-project" list="helpProjectList" placeholder="Project name..."/>
+                <datalist id="helpProjectList"></datalist>
+              </div>
+              <div class="field" style="grid-column:1/-1">
+                <label>Message / What help do you need?</label>
+                <textarea id="help-message" placeholder="Describe what help you need..."></textarea>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+              <button class="btn btn-gold" onclick="sendHelpRequest()">📌 Pin Help Request</button>
+              <span id="helpMsg" style="font-size:12px;font-weight:600"></span>
+            </div>
+          </div>
+        </div>
+        <!-- Incoming Help Requests -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head"><div class="panel-title">📥 Help Requested From Me</div></div>
+          <div id="incomingHelp" style="padding:12px 16px">
+            <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No help requests</div>
+          </div>
+        </div>
+        <!-- My Sent Requests -->
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">📤 My Help Requests</div></div>
+          <div id="sentHelp" style="padding:12px 16px">
+            <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No requests sent</div>
           </div>
         </div>
       </div>
@@ -1937,13 +2033,15 @@ const viewTitles = {
   myProfile: ['My Profile','Update your personal information'],
   holidays: ['Holidays','Company holiday calendar 2026'],
   hrPolicy: ['HR Policies','Company policies — read and acknowledge'],
+  projects: ['Projects','Company project overview'],
+  helpRequest: ['Help Requests','Request help from colleagues'],
 };
 
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   // Auto open parent menus
-  if (['tasks','assign','seniorReview'].includes(name)) {
+  if (['tasks','assign','seniorReview','projects','helpRequest'].includes(name)) {
     document.getElementById('workMenu').style.display = 'block';
     const arr = document.getElementById('work-arrow');
     if (arr) arr.style.transform = 'rotate(90deg)';
@@ -1983,6 +2081,8 @@ function showView(name) {
   if (name === 'myProfile') loadMyProfile();
   if (name === 'holidays') loadHolidays();
   if (name === 'hrPolicy') loadHRPolicies();
+  if (name === 'projects') loadProjects();
+  if (name === 'helpRequest') loadHelpRequests();
 }
 
 // ═══════════════════════════════════════════
@@ -2108,6 +2208,29 @@ async function loadEmpDashboard() {
         <td style="font-size:11px;color:${isLate?'var(--red)':'var(--muted)'};font-weight:${isLate?'700':'400'}">${fmtDate(t.tat_date)}${isLate?' ⚠️':''}</td>
       </tr>`;
     }).join('');
+  }
+
+  // Help Request Notifications
+  const { data: pendingHelp } = await sb.from('help_requests').select('*')
+    .eq('to_email', currentUser.email).eq('is_resolved', false).limit(3);
+  const helpPanel = document.getElementById('helpNotifPanel');
+  const helpList = document.getElementById('helpNotifList');
+  if (helpPanel && helpList) {
+    if (pendingHelp && pendingHelp.length > 0) {
+      helpPanel.style.display = 'block';
+      helpList.innerHTML = pendingHelp.map(h => `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f5f6fa">
+          <span style="font-size:18px">📌</span>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(h.from_name)} needs help${h.project_name?' on '+esc(h.project_name):''}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc((h.message||'').substring(0,60))}...</div>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="resolveHelp('${h.id}');loadEmpDashboard()">✅</button>
+        </div>
+      `).join('');
+    } else {
+      helpPanel.style.display = 'none';
+    }
   }
 
   // WFH Today
@@ -2353,6 +2476,19 @@ async function markEmpLogout() {
   loadEmpDashboard();
 }
 
+async function loadHelpBadge() {
+  try {
+    const { data } = await sb.from('help_requests').select('id')
+      .eq('to_email', currentUser.email).eq('is_resolved', false);
+    const badge = document.getElementById('nb-help');
+    if (badge) {
+      const count = (data||[]).length;
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+  } catch(e) {}
+}
+
 async function loadTodayAttendanceWidget() {
   const today = new Date().toISOString().split('T')[0];
   const { data } = await sb.from('attendance').select('*').eq('employee_email', currentUser.email).eq('date', today).single();
@@ -2420,7 +2556,9 @@ async function renderMyTasks() {
       <td style="font-size:11px">${fmtDate(t.end_date)}</td>
       <td style="font-size:11px;font-weight:700;color:${isLate?'var(--red)':'var(--muted)'}">${fmtDate(t.tat_date)}</td>
       <td>${statusBadge(t.work_status)}</td>
-      <td>${ceoBadge(t.ceo_approval)}</td>
+      <td>
+        ${t.pending_with_name ? `<span style="font-size:11px;font-weight:600;color:var(--purple)">📌 ${esc(t.pending_with_name)}</span>` : ceoBadge(t.ceo_approval)}
+      </td>
       <td style="min-width:100px">${files.length ? renderFileChips(files) : '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
       <td style="display:flex;gap:5px">
         <button class="btn btn-primary btn-sm" onclick="openTaskModal('${t.id}')">Update</button>
@@ -2430,7 +2568,7 @@ async function renderMyTasks() {
   }).join('');
 }
 
-function openTaskModal(taskId) {
+async function openTaskModal(taskId) {
   const t = myTasks.find(x => x.id === taskId);
   if (!t) return;
   currentTaskRow = t;
@@ -2448,14 +2586,15 @@ function openTaskModal(taskId) {
     <div class="field" style="margin-bottom:14px">
       <label>Update Status</label>
       <select id="modal-status" onchange="handleStatusChange(this.value)">
-        ${['Not Started','In Progress','Completed','Sent to Senior'].map(s=>`<option ${s===t.work_status?'selected':''}>${s}</option>`).join('')}
+        ${['Not Started','In Progress','Completed'].map(s=>`<option ${s===t.work_status?'selected':''}>${s}</option>`).join('')}
       </select>
     </div>
-    <div id="senior-info" style="margin-bottom:14px;display:${t.work_status==='Sent to Senior'||t.work_status==='Senior Approved'?'block':'none'}">
-      <div style="background:#f0ebff;border-radius:8px;padding:10px 12px;font-size:12px;color:#6d28d9">
-        <strong>Senior Review:</strong> ${t.senior_approval||'Pending'} 
-        ${t.senior_approved_by?'by '+t.senior_approved_by:''}
-      </div>
+    <div id="send-to-field" style="margin-bottom:14px;display:${t.work_status==='Completed'?'block':'none'}">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:5px">Send To (for approval/help)</label>
+      <select id="modal-send-to" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+        <option value="">— Select Person —</option>
+      </select>
+      ${t.pending_with_name?`<div style="margin-top:6px;font-size:11px;color:var(--muted)">Currently with: <strong>${esc(t.pending_with_name)}</strong></div>`:''}
     </div>
     `}
     <div class="field" style="margin-bottom:14px">
@@ -2487,6 +2626,15 @@ function openTaskModal(taskId) {
     });
   }
   document.getElementById('taskModal').classList.add('open');
+  // Load employees for Send To dropdown
+  const { data: emps } = await sb.from('employees').select('name,email').eq('is_active',true);
+  const sendToEl = document.getElementById('modal-send-to');
+  if (sendToEl && emps) {
+    sendToEl.innerHTML = '<option value="">— Select Person —</option>' +
+      emps.filter(e => e.email !== currentUser.email)
+        .map(e => `<option value="${esc(e.email)}" data-name="${esc(e.name)}" ${t.pending_with_email===e.email?'selected':''}>${esc(e.name)}</option>`)
+        .join('');
+  }
 }
 
 function previewFile(input) {
@@ -2530,42 +2678,47 @@ async function saveTaskUpdate() {
     await uploadTaskFile(currentTaskRow.id, file);
   }
 
+  // Get Send To person
+  const sendToEl = document.getElementById('modal-send-to');
+  const sendToEmail = sendToEl ? sendToEl.value : '';
+  const sendToName = sendToEl && sendToEl.selectedOptions[0] ? sendToEl.selectedOptions[0].dataset.name : '';
+
   const updates = { work_status: status, comments, updated_at: new Date().toISOString() };
   if (status === 'Completed' && ceoVal) updates.ceo_approval = ceoVal;
-  if (status === 'Sent to Senior') { updates.senior_approval = 'Pending'; updates.senior_approved_by = ''; }
+  if (status === 'Completed' && sendToEmail) {
+    updates.pending_with_email = sendToEmail;
+    updates.pending_with_name = sendToName;
+  }
+  if (status !== 'Completed') {
+    updates.pending_with_email = null;
+    updates.pending_with_name = null;
+  }
+
   const { error } = await sb.from('tasks').update(updates).eq('id', currentTaskRow.id);
   if (error) { msgEl.textContent = '❌ ' + error.message; msgEl.style.color = 'var(--red)'; return; }
 
-  // Send email to senior when task sent for review
-  if (status === 'Sent to Senior') {
-    const { data: seniors } = await sb.from('employees')
-      .select('name,email')
-      .eq('is_active', true)
-      .in('designation', ['Senior Vastu Research Analyst','Senior Designer','Project Head','Manager']);
-    if (seniors && seniors.length) {
-      for (const senior of seniors) {
-        await sendEmail(
-          senior.email, senior.name,
-          'Task Pending Your Review — Sayash Vastu',
-          `Dear ${senior.name},
+  // Send email to selected person
+  if (status === 'Completed' && sendToEmail && sendToName) {
+    await sendEmail(
+      sendToEmail, sendToName,
+      'Task Needs Your Review — Sayash Vastu',
+      `Dear ${sendToName},
 
-${currentUser.name} has completed a task and sent it for your review.
+${currentUser.name} has completed a task and needs your review/approval.
 
 Project: ${currentTaskRow.project}
 Task: ${currentTaskRow.task_detail}
 Comments: ${comments || 'No comments'}
 
-Please login to review and approve.
+Please login to review.
 
 Regards,
 Sayash Vastu Portal`,
-          'Senior Review',
-          'https://sayash-vastu-portal.vercel.app',
-          'Review Task →'
-        );
-      }
-    }
-    showToast('✅ Task sent to Senior for review!', 'ok');
+      'Task Review',
+      'https://sayash-vastu-portal.vercel.app',
+      'View Task →'
+    );
+    showToast('✅ Task sent to ' + sendToName + '!', 'ok');
   } else {
     showToast('✅ Task updated!', 'ok');
   }
@@ -3215,6 +3368,239 @@ async function savePassword() {
 }
 
 // ═══════════════════════════════════════════
+//  PROJECTS
+// ═══════════════════════════════════════════
+async function loadProjects() {
+  const isCEO = currentUser.role === 'ceo' || currentUser.role === 'manager';
+  const addPanel = document.getElementById('addProjectPanel');
+  if (addPanel) addPanel.style.display = isCEO ? 'block' : 'none';
+
+  // Load employees for member selection (CEO only)
+  if (isCEO) {
+    const { data: emps } = await sb.from('employees').select('name,email').eq('is_active',true);
+    const membersList = document.getElementById('proj-members-list');
+    if (membersList && emps) {
+      membersList.innerHTML = emps.map(e => `
+        <label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg);border-radius:6px;cursor:pointer;font-size:12px">
+          <input type="checkbox" value="${esc(e.email)}" data-name="${esc(e.name)}" style="cursor:pointer"/>
+          ${esc(e.name)}
+        </label>
+      `).join('');
+    }
+  }
+
+  const { data: projects } = await sb.from('projects').select('*').order('created_at',{ascending:false});
+  const el = document.getElementById('projectsList');
+
+  if (!projects || !projects.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-title">No projects yet</div><p>CEO will add projects here</p></div>';
+    return;
+  }
+
+  const statusColors = {
+    'In Progress': 'b-blue',
+    'Not Started': 'b-gray',
+    'On Hold': 'b-amber',
+    'Completed': 'b-green'
+  };
+
+  el.innerHTML = projects.map(p => {
+    const members = Array.isArray(p.assigned_to) ? p.assigned_to : [];
+    const today = new Date(); today.setHours(0,0,0,0);
+    const endDate = p.end_date ? new Date(p.end_date) : null;
+    const isOverdue = endDate && today > endDate && p.status !== 'Completed';
+    return `<div class="panel" style="margin-bottom:14px;${isOverdue?'border-left:3px solid var(--red)':''}">
+      <div class="panel-head">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="panel-title">🗂️ ${esc(p.project_name)}</div>
+            <span class="badge ${statusColors[p.status]||'b-gray'}">${esc(p.status)}</span>
+            ${isOverdue?'<span class="badge b-red">⚠️ Overdue</span>':''}
+          </div>
+          ${p.description?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(p.description)}</div>`:''}
+        </div>
+        ${isCEO?`<button class="btn btn-sm btn-red" onclick="deleteProject('${p.id}')">🗑️</button>`:''}
+      </div>
+      <div class="panel-body" style="padding-top:10px">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--muted)">
+            📅 <strong>Start:</strong> ${fmtDate(p.start_date)} &nbsp;|&nbsp; 
+            🏁 <strong>End:</strong> <span style="color:${isOverdue?'var(--red)':'var(--text)'};font-weight:${isOverdue?'700':'400'}">${fmtDate(p.end_date)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--muted);font-weight:600">TEAM:</span>
+            ${members.length ? members.map(m=>`
+              <div style="display:flex;align-items:center;gap:5px;background:var(--bg);padding:3px 8px;border-radius:20px">
+                <div class="av" style="width:20px;height:20px;font-size:8px;background:var(--navy)">${esc(m.name||'').substring(0,2).toUpperCase()}</div>
+                <span style="font-size:11px;color:var(--navy);font-weight:600">${esc(m.name||'')}</span>
+              </div>
+            `).join('') : '<span style="font-size:11px;color:var(--muted)">No members assigned</span>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addProject() {
+  const name = document.getElementById('proj-name').value.trim();
+  const status = document.getElementById('proj-status').value;
+  const start = document.getElementById('proj-start').value;
+  const end = document.getElementById('proj-end').value;
+  const desc = document.getElementById('proj-desc').value.trim();
+  const msgEl = document.getElementById('projMsg');
+
+  if (!name) { msgEl.textContent='⚠️ Project name required'; msgEl.style.color='var(--red)'; return; }
+
+  // Get selected members
+  const checkboxes = document.querySelectorAll('#proj-members-list input[type=checkbox]:checked');
+  const members = Array.from(checkboxes).map(cb => ({ email: cb.value, name: cb.dataset.name }));
+
+  const { error } = await sb.from('projects').insert({
+    project_name: name, status, start_date: start||null, end_date: end||null,
+    description: desc, assigned_to: members,
+    created_by_name: currentUser.name, created_by_email: currentUser.email
+  });
+
+  if (error) { msgEl.textContent='❌ '+error.message; msgEl.style.color='var(--red)'; return; }
+  msgEl.textContent='✅ Project added!'; msgEl.style.color='var(--green)';
+  showToast('✅ Project added!','ok');
+  document.getElementById('proj-name').value='';
+  document.getElementById('proj-desc').value='';
+  loadProjects();
+  setTimeout(()=>msgEl.textContent='',3000);
+}
+
+async function deleteProject(id) {
+  if (!confirm('Delete this project?')) return;
+  await sb.from('projects').delete().eq('id',id);
+  showToast('✅ Project deleted!','ok');
+  loadProjects();
+}
+
+// ═══════════════════════════════════════════
+//  HELP REQUESTS
+// ═══════════════════════════════════════════
+async function loadHelpRequests() {
+  // Load employee names for autocomplete
+  const { data: emps } = await sb.from('employees').select('name,email').eq('is_active',true);
+  const helpList = document.getElementById('helpNameList');
+  if (helpList && emps) {
+    helpList.innerHTML = emps.filter(e=>e.email!==currentUser.email).map(e=>`<option value="${esc(e.name)}" data-email="${esc(e.email)}">`).join('');
+  }
+
+  // Load projects for autocomplete
+  const { data: projs } = await sb.from('projects').select('project_name');
+  const projList = document.getElementById('helpProjectList');
+  if (projList && projs) {
+    projList.innerHTML = projs.map(p=>`<option value="${esc(p.project_name)}">`).join('');
+  }
+
+  // Help badge count
+  const { data: incoming } = await sb.from('help_requests').select('*')
+    .eq('to_email', currentUser.email).eq('is_resolved', false);
+  const badge = document.getElementById('nb-help');
+  if (badge) {
+    const count = (incoming||[]).length;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+
+  // Render incoming requests
+  const inEl = document.getElementById('incomingHelp');
+  if (!incoming || !incoming.length) {
+    inEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No pending help requests</div>';
+  } else {
+    inEl.innerHTML = incoming.map(h => `
+      <div style="padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px;border-left:3px solid var(--gold)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy)">📌 ${esc(h.from_name)} needs your help</div>
+            ${h.project_name?`<div style="font-size:11px;color:var(--muted);margin-top:3px">Project: ${esc(h.project_name)}</div>`:''}
+            <div style="font-size:12px;color:var(--text);margin-top:6px;padding:8px;background:#fff;border-radius:6px">${esc(h.message||'')}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:6px">${new Date(h.created_at).toLocaleDateString('en-IN')}</div>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="resolveHelp('${h.id}')">✅ Done</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // My sent requests
+  const { data: sent } = await sb.from('help_requests').select('*')
+    .eq('from_email', currentUser.email).order('created_at',{ascending:false}).limit(10);
+  const sentEl = document.getElementById('sentHelp');
+  if (!sent || !sent.length) {
+    sentEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No requests sent yet</div>';
+  } else {
+    sentEl.innerHTML = sent.map(h => `
+      <div style="padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px;border-left:3px solid ${h.is_resolved?'var(--green)':'var(--blue)'}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy)">To: ${esc(h.to_name)}</div>
+            ${h.project_name?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Project: ${esc(h.project_name)}</div>`:''}
+            <div style="font-size:12px;color:var(--text);margin-top:6px">${esc(h.message||'')}</div>
+          </div>
+          <span class="badge ${h.is_resolved?'b-green':'b-blue'}">${h.is_resolved?'✅ Resolved':'⏳ Pending'}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+async function sendHelpRequest() {
+  const toName = document.getElementById('help-to-name').value.trim();
+  const project = document.getElementById('help-project').value.trim();
+  const message = document.getElementById('help-message').value.trim();
+  const msgEl = document.getElementById('helpMsg');
+
+  if (!toName || !message) { msgEl.textContent='⚠️ Fill all fields'; msgEl.style.color='var(--red)'; return; }
+
+  // Find email from name
+  const { data: emp } = await sb.from('employees').select('name,email').eq('name',toName).single();
+  if (!emp) { msgEl.textContent='⚠️ Employee not found'; msgEl.style.color='var(--red)'; return; }
+
+  const { error } = await sb.from('help_requests').insert({
+    from_email: currentUser.email, from_name: currentUser.name,
+    to_email: emp.email, to_name: emp.name,
+    project_name: project, message
+  });
+
+  if (error) { msgEl.textContent='❌ '+error.message; msgEl.style.color='var(--red)'; return; }
+
+  // Send email notification
+  await sendEmail(emp.email, emp.name,
+    'Help Request from ' + currentUser.name + ' — Sayash Vastu',
+    `Dear ${emp.name},
+
+${currentUser.name} has requested your help.
+
+Project: ${project||'—'}
+Message: ${message}
+
+Please login to view and respond.
+
+Regards,
+Sayash Vastu Portal`,
+    'Help Request', 'https://sayash-vastu-portal.vercel.app', 'View Request →'
+  );
+
+  msgEl.textContent='✅ Help request sent!'; msgEl.style.color='var(--green)';
+  showToast('✅ Help request pinned!','ok');
+  document.getElementById('help-to-name').value='';
+  document.getElementById('help-project').value='';
+  document.getElementById('help-message').value='';
+  loadHelpRequests();
+  setTimeout(()=>msgEl.textContent='',4000);
+}
+
+async function resolveHelp(id) {
+  await sb.from('help_requests').update({is_resolved:true}).eq('id',id);
+  showToast('✅ Marked as resolved!','ok');
+  loadHelpRequests();
+}
+
+// ═══════════════════════════════════════════
 //  HOLIDAYS
 // ═══════════════════════════════════════════
 async function loadHolidays() {
@@ -3853,8 +4239,8 @@ async function rejectSeniorTask(taskId) {
 }
 
 function handleStatusChange(val) {
-  const seniorInfo = document.getElementById('senior-info');
-  if (seniorInfo) seniorInfo.style.display = val==='Sent to Senior'||val==='Senior Approved'?'block':'none';
+  const sendToField = document.getElementById('send-to-field');
+  if (sendToField) sendToField.style.display = val==='Completed'?'block':'none';
 }
 
 // ═══════════════════════════════════════════
@@ -3910,7 +4296,6 @@ function statusBadge(s) {
     'In Progress':'b-blue',
     'Sent for Review':'b-amber',
     'Completed':'b-green',
-    'Sent to Senior':'b-purple',
     'Senior Approved':'b-blue',
     'Report Ready':'b-green'
   };
