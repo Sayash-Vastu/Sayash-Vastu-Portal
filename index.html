@@ -2588,12 +2588,14 @@ async function loadCeoDashboard() {
       </div>
     </div>
   `;
-  document.getElementById('homeStats').innerHTML = '';
-  document.getElementById('ceoActivitySection').style.display = 'block';
-  function loadCeoActivityFeed() {
+ document.getElementById('homeStats').innerHTML = '';
+document.getElementById('ceoActivitySection').style.display = 'block';
+
+function loadCeoActivityFeed() {
   return;
 }
-  //loadCeoActivityFeed();
+
+//loadCeoActivityFeed();
 
   // CEO notices
   const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
