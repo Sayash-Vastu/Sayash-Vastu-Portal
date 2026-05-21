@@ -2589,7 +2589,8 @@ async function loadCeoDashboard() {
     </div>
   `;
  document.getElementById('homeStats').innerHTML = '';
-document.getElementById('ceoActivitySection').style.display = 'none';//Fixed
+const actEl = document.getElementById('ceoActivitySection');
+if(actEl) actEl.style.display = 'none';
   // CEO notices
   const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
   const noticesEl = document.getElementById('homeNotices');
