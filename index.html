@@ -2122,7 +2122,7 @@ function showLoginError(msg) {
   el.textContent = msg; el.style.display = 'block';
 }
 
-function loadCeoActivityFeed() { return; }
+
   sessionStorage.removeItem('sv_user'); currentUser = null;
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('appPage').style.display = 'none';
@@ -5074,6 +5074,7 @@ function showToast(msg, type) {
 document.querySelectorAll('.modal-overlay').forEach(el=>{
   el.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
 });
+function loadCeoActivityFeed() { return; }
 </script>
 </body>
 </html>
