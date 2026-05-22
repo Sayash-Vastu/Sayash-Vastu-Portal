@@ -2122,13 +2122,15 @@ function showLoginError(msg) {
   el.textContent = msg; el.style.display = 'block';
 }
 
-
+function doLogout() {
   sessionStorage.removeItem('sv_user'); currentUser = null;
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('appPage').style.display = 'none';
   document.getElementById('loginEmail').value = '';
   document.getElementById('loginPass').value = '';
 }
+
+function loadCeoActivityFeed() { return; }
 
 // ═══════════════════════════════════════════
 //  SHOW APP
@@ -5074,7 +5076,6 @@ function showToast(msg, type) {
 document.querySelectorAll('.modal-overlay').forEach(el=>{
   el.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
 });
-function loadCeoActivityFeed() { return; }
 </script>
 </body>
 </html>
