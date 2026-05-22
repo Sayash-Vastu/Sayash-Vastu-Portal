@@ -2589,29 +2589,7 @@ async function loadCeoDashboard() {
     </div>
   `;
   document.getElementById('homeStats').innerHTML = '';
-  document.getElementById('ceoActivitySection').style.display = 'block';
-  async function ``() {
-  const { data } = await sb.from('tasks')
-    .select('*').order('updated_at', {ascending: false}).limit(8);
-  const el = document.getElementById('ceoActivityFeed');
-  if (!el) return;
-  if (!data || !data.length) {
-    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">No activity yet</div>';
-    return;
-  }
-  el.innerHTML = data.map(t => `
-    <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-      <div style="width:8px;height:8px;border-radius:50%;background:${t.work_status==='Completed'?'var(--green)':t.work_status==='In Progress'?'var(--blue)':'var(--amber)'};flex-shrink:0"></div>
-      <div style="flex:1">
-        <span style="font-size:12px;font-weight:600;color:var(--navy)">${esc(t.assigned_to_name)}</span>
-        <span style="font-size:12px;color:var(--muted)"> — ${esc(t.project)}</span>
-      </div>
-      <span class="badge ${t.work_status==='Completed'?'b-green':t.work_status==='In Progress'?'b-blue':'b-amber'}" style="font-size:10px">${esc(t.work_status)}</span>
-    </div>
-  `).join('');
-}
-
-  // CEO notices
+      // CEO notices
   const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
   const noticesEl = document.getElementById('homeNotices');
   if (noticesEl) {
