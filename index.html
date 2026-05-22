@@ -2590,7 +2590,7 @@ async function loadCeoDashboard() {
   `;
   document.getElementById('homeStats').innerHTML = '';
   document.getElementById('ceoActivitySection').style.display = 'block';
-  async function loadCeoActivityFeed() {
+  async function ``() {
   const { data } = await sb.from('tasks')
     .select('*').order('updated_at', {ascending: false}).limit(8);
   const el = document.getElementById('ceoActivityFeed');
@@ -2834,7 +2834,7 @@ async function loadHelpBadge() {
   } catch(e) {}
 }
 
-async function loadCeoActivityFeed() {
+async function ``() {
   document.getElementById('ceoActivitySection').style.display = 'block';
   const { data: tasks } = await sb.from('tasks').select('*').order('updated_at',{ascending:false});
   const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', new Date().toISOString().split('T')[0]);
