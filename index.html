@@ -2122,7 +2122,7 @@ function showLoginError(msg) {
   el.textContent = msg; el.style.display = 'block';
 }
 
-function doLogout() {
+function loadCeoActivityFeed() { return; }
   sessionStorage.removeItem('sv_user'); currentUser = null;
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('appPage').style.display = 'none';
