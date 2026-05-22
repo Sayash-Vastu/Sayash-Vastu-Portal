@@ -2590,7 +2590,6 @@ async function loadCeoDashboard() {
   `;
   document.getElementById('homeStats').innerHTML = '';
   document.getElementById('ceoActivitySection').style.display = 'block';
-  loadCeoActivityFeed();
   async function loadCeoActivityFeed() {
   const { data } = await sb.from('tasks')
     .select('*').order('updated_at', {ascending: false}).limit(8);
