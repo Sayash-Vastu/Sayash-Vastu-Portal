@@ -2588,9 +2588,10 @@ async function loadCeoDashboard() {
       </div>
     </div>
   `;
- document.getElementById('homeStats').innerHTML = '';
-const actEl = document.getElementById('ceoActivitySection');
-if(actEl) actEl.style.display = 'none';
+  document.getElementById('homeStats').innerHTML = '';
+  document.getElementById('ceoActivitySection').style.display = 'block';
+  loadCeoActivityFeed();
+
   // CEO notices
   const { data: notices } = await sb.from('notices').select('*').eq('is_active',true).order('created_at',{ascending:false}).limit(3);
   const noticesEl = document.getElementById('homeNotices');
@@ -2812,6 +2813,123 @@ async function loadHelpBadge() {
       badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
   } catch(e) {}
+}
+
+async function loadCeoActivityFeed() {
+  document.getElementById('ceoActivitySection').style.display = 'block';
+  const { data: tasks } = await sb.from('tasks').select('*').order('updated_at',{ascending:false});
+  const { data: todayAtt } = await sb.from('attendance').select('*').eq('date', new Date().toISOString().split('T')[0]);
+  const { data: emps } = await sb.from('employees').select('name,email,designation').eq('is_active',true);
+  const el = document.getElementById('ceoActivityFeed');
+
+  if (!tasks || !tasks.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No activity yet</p></div>';
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const empMap = {};
+  tasks.forEach(t => {
+    if (!empMap[t.assigned_to_name]) empMap[t.assigned_to_name] = [];
+    empMap[t.assigned_to_name].push(t);
+  });
+
+  let html = '<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">';
+
+  Object.keys(empMap).forEach(empName => {
+    const empTasks = empMap[empName];
+    const activeTasks = empTasks.filter(t => t.work_status !== 'Completed' && t.work_status !== 'Report Ready');
+    const completedCount = empTasks.filter(t => t.work_status === 'Completed' || t.work_status === 'Report Ready').length;
+    const delayedCount = activeTasks.filter(t => {
+      const tat = t.tat_date ? new Date(t.tat_date) : null;
+      return tat && today > tat;
+    }).length;
+
+    const attRecord = (todayAtt||[]).find(a => a.employee_name === empName);
+    const empInfo = (emps||[]).find(e => e.name === empName);
+
+    let attBadge = '<span class="badge b-red" style="font-size:10px">Absent</span>';
+    if (attRecord?.check_in && !attRecord?.check_out) attBadge = '<span class="badge b-green" style="font-size:10px">Present</span>';
+    else if (attRecord?.check_in && attRecord?.check_out) attBadge = '<span class="badge b-blue" style="font-size:10px">Checked Out</span>';
+    else if (attRecord?.status === 'Half Day') attBadge = '<span class="badge b-amber" style="font-size:10px">Half Day</span>';
+
+    const urgentTask = activeTasks.sort((a,b) => {
+      const tatA = a.tat_date ? new Date(a.tat_date) : new Date('9999');
+      const tatB = b.tat_date ? new Date(b.tat_date) : new Date('9999');
+      return tatA - tatB;
+    })[0];
+
+    let pendingWith = '—'; let pendingColor = 'var(--muted)';
+    if (urgentTask) {
+      if (urgentTask.pending_with_name) {
+        pendingWith = '📌 ' + urgentTask.pending_with_name;
+        pendingColor = 'var(--purple)';
+      } else if (urgentTask.work_status === 'Not Started' || urgentTask.work_status === 'In Progress') {
+        pendingWith = empName; pendingColor = 'var(--blue)';
+      } else if (urgentTask.work_status === 'Completed') {
+        pendingWith = '✅ Completed'; pendingColor = 'var(--green)';
+      } else if (urgentTask.work_status === 'Report Ready') {
+        pendingWith = '📄 Report Ready'; pendingColor = 'var(--green)';
+      } else if (urgentTask.work_status === 'Senior Approved') {
+        pendingWith = '⏳ CEO Approval'; pendingColor = '#c9a84c';
+      }
+    }
+
+    const isLate = urgentTask && (() => { const tat = urgentTask.tat_date ? new Date(urgentTask.tat_date) : null; return tat && today > tat; })();
+
+    html += `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;${isLate?'border-left:3px solid var(--red)':delayedCount===0&&activeTasks.length===0?'border-left:3px solid var(--green)':'border-left:3px solid var(--blue)'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av" style="background:var(--navy);width:34px;height:34px;font-size:12px">${esc(empName).substring(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--navy)">${esc(empName)}</div>
+            <div style="font-size:10px;color:var(--muted)">${esc(empInfo?.designation||'')}</div>
+          </div>
+          ${attBadge}
+        </div>
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:800;color:var(--blue)">${activeTasks.length}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Active</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:800;color:var(--green)">${completedCount}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Done</div>
+          </div>
+          ${delayedCount>0?`<div style="text-align:center">
+            <div style="font-size:16px;font-weight:800;color:var(--red)">${delayedCount}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Delayed</div>
+          </div>`:''}
+        </div>
+        ${urgentTask?`<div style="background:#f8f9fc;border-radius:8px;padding:8px 12px;flex:1;min-width:200px;max-width:340px">
+          <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Current Task</div>
+          <div style="font-size:12px;font-weight:600;color:var(--navy)">${esc(urgentTask.project)} — ${esc(urgentTask.task_detail.substring(0,40))}${urgentTask.task_detail.length>40?'...':''}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            ${statusBadge(urgentTask.work_status)}
+            <span style="font-size:10px;color:${isLate?'var(--red)':'var(--muted)'};font-weight:600">TAT: ${fmtDate(urgentTask.tat_date)}${isLate?' ⚠️':''}</span>
+          </div>
+        </div>`:'<div style="font-size:12px;color:var(--green);font-weight:600">✅ All tasks completed!</div>'}
+        <div style="text-align:right">
+          ${urgentTask && urgentTask.work_status==='Senior Approved' ? `
+          <div style="font-size:9px;color:var(--muted);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">CEO Finalize</div>
+          <select onchange="ceoFinalizeTask('${urgentTask.id}',this.value)"
+            style="padding:5px 10px;border:1.5px solid var(--gold);border-radius:6px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--navy);background:#fdf6e3;font-weight:600">
+            <option value="">— Select —</option>
+            <option>Finalize with SG</option>
+            <option>Finalize with YG</option>
+          </select>
+          ` : `
+          <div style="font-size:11px;font-weight:600;color:${pendingColor}">${pendingWith}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Pending with</div>
+          `}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 async function loadTodayAttendanceWidget() {
